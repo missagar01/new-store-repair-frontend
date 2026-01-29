@@ -36,36 +36,74 @@ export default function StoreGRN() {
     const [search, setSearch] = useState("");
     const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
     const [processingGrn, setProcessingGrn] = useState<string | null>(null);
+    const [historyRows, setHistoryRows] = useState<StoreGRNRow[]>([]);
 
     /* ================= FETCH ORACLE DATA ================= */
 
     useEffect(() => {
-        let active = true;
+        let isMounted = true;
 
-        const fetchGRN = async () => {
+        const fetchData = async () => {
             setLoading(true);
-            try {
-                const res = await storeGRNApi.getPending();
-                if (!active) return;
 
-                if (res?.success) {
-                    setRows(res.data || []);
-                } else {
+            try {
+                const [oracleRes, pgRes] = await Promise.all([
+                    storeGRNApi.getPending(),          // ORACLE
+                    storeGRNApprovalApi.getAll(),      // PGSQL
+                ]);
+
+                if (!isMounted) return;
+
+                if (!oracleRes?.success) {
                     toast.error("Failed to load Store GRN data");
+                    return;
                 }
+
+                const oracleRows: StoreGRNRow[] = oracleRes.data || [];
+                const pgRows: any[] = pgRes?.data || [];
+
+                // PG GRN lookup
+                const pgGrnSet = new Set(
+                    pgRows
+                        .map((r) => r?.grn_no)
+                        .filter(Boolean)
+                        .map(String)
+                );
+
+                // ✅ Pending = Oracle rows NOT present in PG
+                const pendingRows = oracleRows.filter(
+                    (row) => row.VRNO && !pgGrnSet.has(String(row.VRNO))
+                );
+
+                // ✅ History = ONLY PG rows
+                const historyMapped: StoreGRNRow[] = pgRows.map((r) => ({
+                    VRNO: r.grn_no,
+                    VRDATE: r.grn_date,
+                    PARTYNAME: r.party_name,
+                    PARTYBILLNO: r.party_bill_no,
+                    PARTYBILLAMT: r.party_bill_amount,
+                    PLANNEDDATE: r.planned_date,
+                    sended_bill: true,
+                }));
+
+                setRows(pendingRows);
+                setHistoryRows(historyMapped);
             } catch (err) {
                 console.error(err);
                 toast.error("Error fetching Store GRN data");
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
-        fetchGRN();
+        fetchData();
+
         return () => {
-            active = false;
+            isMounted = false;
         };
     }, []);
+
+
 
     /* ================= SEND BILL ================= */
 
@@ -92,12 +130,16 @@ export default function StoreGRN() {
 
             toast.success("Bill sent successfully");
 
-            // 🔥 Move row to history locally
-            setRows((prev) =>
-                prev.map((r) =>
-                    r.VRNO === row.VRNO ? { ...r, sended_bill: true } : r
-                )
-            );
+            setRows((prev) => prev.filter((r) => r.VRNO !== row.VRNO));
+
+            setHistoryRows((prev) => [
+                {
+                    ...row,
+                    sended_bill: true,
+                },
+                ...prev,
+            ]);
+
         } catch (err) {
             console.error(err);
             toast.error("Failed to send bill");
@@ -110,20 +152,19 @@ export default function StoreGRN() {
 
     const filteredRows = useMemo(() => {
         const q = search.trim().toLowerCase();
+        const source = activeTab === "pending" ? rows : historyRows;
 
-        return rows.filter((r) => {
-            const matchesTab =
-                activeTab === "pending" ? !r.sended_bill : r.sended_bill;
+        return source.filter((r) => {
+            if (!q) return true;
 
-            const matchesSearch =
-                !q ||
+            return (
                 r.VRNO?.toLowerCase().includes(q) ||
                 r.PARTYNAME?.toLowerCase().includes(q) ||
-                r.PARTYBILLNO?.toLowerCase().includes(q);
-
-            return matchesTab && matchesSearch;
+                r.PARTYBILLNO?.toLowerCase().includes(q)
+            );
         });
-    }, [rows, search, activeTab]);
+    }, [rows, historyRows, search, activeTab]);
+
 
     /* ================= UI ================= */
 

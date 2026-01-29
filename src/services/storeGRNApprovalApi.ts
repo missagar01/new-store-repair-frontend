@@ -44,18 +44,6 @@ export const storeGRNApprovalApi = {
     },
 
 
-    /* PATCH – APPROVED BY ADMIN */
-    approveByAdmin: async (
-        grnNo: string
-    ): Promise<StoreGRNApprovalResponse> => {
-        return apiRequest<StoreGRNApprovalResponse>(
-            `/store-grn-approval/approve-admin/${grnNo}`,
-            {
-                method: "PATCH",
-            }
-        );
-    },
-
     /* PATCH – APPROVED BY GM */
     approveByGM: async (
         grnNo: string
