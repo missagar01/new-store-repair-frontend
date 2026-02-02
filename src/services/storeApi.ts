@@ -75,6 +75,10 @@ export const storeApi = {
   getRepairGatePassReceived: () => apiRequest("/repair-gate-pass/received"),
   getRepairGatePassHistory: () => apiRequest("/repair-gate-pass/history"),
   getRepairGatePassCounts: () => apiRequest("/repair-gate-pass/counts"),
+  downloadRepairGatePassPending: () =>
+    fetch(`${API_BASE_URL}/repair-gate-pass/pending/download`, {
+      headers: buildAuthHeaders(),
+    }).then((res) => res.blob()),
 
   downloadHistoryIndents: () =>
     fetch(`${API_BASE_URL}/store-indent/history/download`, {
@@ -160,6 +164,13 @@ export const storeApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  getGrnAndPoSummary: (params: { fromDate?: string; toDate?: string }) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/grn-and-po/summary${queryString ? `?${queryString}` : ""}`);
+  },
+
+  getStoreIssues: () => apiRequest("/store-issue"),
 
   // User APIs
   getUser: (employeeId: string) => apiRequest(`/user/${employeeId}`),

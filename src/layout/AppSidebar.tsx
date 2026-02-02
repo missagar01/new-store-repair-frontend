@@ -33,6 +33,7 @@ const storeAdminSubItems = [
 // Admin store pages (as per StoreFMS main.tsx)
 const storeAdminLimitedSubItems = [
   { name: "Dashboard", path: "/store/dashboard" },
+  { name: "Store Issue", path: "/store/store-issue" },
   { name: "Indent", path: "/store/approve-indent" },
   { name: "Purchase Order", path: "/store/pending-indents" },
   // { name: "Administration", path: "/store/administration" },
@@ -43,6 +44,7 @@ const storeAdminLimitedSubItems = [
   // { name: "Store GRN Admin Approval", path: "/store/store-grn-admin" },
   { name: "Store GRN GM Approval", path: "/store/store-grn-gm" },
   { name: "Store GRN Close", path: "/store/store-grn-close" },
+  { name: "GRN & PO", path: "/store/grn-po" },
   { name: "Settings", path: "/store/settings" },
 
 ];
@@ -166,7 +168,7 @@ const AppSidebar: React.FC = () => {
             {(isExpanded || isHovered || isMobileOpen) && (
               <div className="mt-2">
                 <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 px-3 py-2 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded-r-md shadow-sm">
-                  Store
+                  Store & Purchase
                 </h2>
                 <ul className="space-y-1">
                   {storeMenuItems.map((item) => (

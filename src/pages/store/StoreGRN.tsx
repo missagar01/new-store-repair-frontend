@@ -59,7 +59,12 @@ export default function StoreGRN() {
                     return;
                 }
 
-                const oracleRows: StoreGRNRow[] = oracleRes.data || [];
+                const dateThreshold = new Date('2026-02-01T00:00:00');
+                const oracleRows: StoreGRNRow[] = (oracleRes.data || []).filter((row: any) => {
+                    if (!row.VRDATE) return false;
+                    const rowDate = new Date(row.VRDATE);
+                    return rowDate >= dateThreshold;
+                });
                 const pgRows: any[] = pgRes?.data || [];
 
                 // PG GRN lookup

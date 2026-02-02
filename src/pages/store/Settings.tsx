@@ -29,6 +29,7 @@ const STORE_ACCESS_OPTIONS = [
     "Store GRN",
     "Store GRN GM Approval",
     "Store GRN Close",
+    "GRN & PO",
 ];
 
 /* ================= COMPONENT ================= */

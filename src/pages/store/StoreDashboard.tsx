@@ -1,7 +1,7 @@
-// Store Dashboard - Default Dashboard (Same as StoreFMS)
+// Store Dashboard - Modern UI Version
 import { useEffect, useState } from "react";
 import { storeApi } from "../../services";
-import { ClipboardList, LayoutDashboard, PackageCheck, Truck, Warehouse, FileText, TrendingUp, BarChart3, Activity } from "lucide-react";
+import { ClipboardList, LayoutDashboard, PackageCheck, Truck, Warehouse, FileText, TrendingUp, BarChart3, Activity, ArrowUpRight, ArrowDownRight, Package, Users, Calendar, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import Loading from "./Loading";
 
@@ -111,82 +111,72 @@ export default function StoreDashboard() {
     };
   }, []);
 
-
-
   const cards = [
     {
       title: 'Total Indents',
-      icon: <ClipboardList size={18} />,
+      icon: <ClipboardList size={22} />,
       value: dashboardData?.totalIndents ?? '—',
       sublabel: 'Indented Quantity',
       subvalue: dashboardData ? dashboardData.totalIndentedQuantity.toLocaleString() : '—',
-      bg: 'from-indigo-50 via-indigo-100 to-indigo-50 dark:from-indigo-950 dark:via-indigo-900 dark:to-indigo-950',
-      border: 'border-indigo-200 dark:border-indigo-800',
-      text: 'text-indigo-700 dark:text-indigo-300',
-      iconBg: 'bg-indigo-100 dark:bg-indigo-900',
-      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      bgGradient: 'from-blue-500 to-indigo-600',
+      shadowColor: 'shadow-indigo-200 dark:shadow-indigo-900/20',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
     },
     {
       title: 'Total Purchases',
-      icon: <Truck size={18} />,
+      icon: <Truck size={22} />,
       value: dashboardData?.totalPurchaseOrders ?? '—',
       sublabel: 'Purchased Quantity',
       subvalue: dashboardData ? dashboardData.totalPurchasedQuantity.toLocaleString() : '—',
-      bg: 'from-emerald-50 via-emerald-100 to-emerald-50 dark:from-emerald-950 dark:via-emerald-900 dark:to-emerald-950',
-      border: 'border-emerald-200 dark:border-emerald-800',
-      text: 'text-emerald-700 dark:text-emerald-300',
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900',
-      iconColor: 'text-emerald-600 dark:text-emerald-400',
+      bgGradient: 'from-emerald-500 to-teal-600',
+      shadowColor: 'shadow-emerald-200 dark:shadow-emerald-900/20',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
     },
     {
-      title: 'Total Issued',
-      icon: <PackageCheck size={18} />,
-      value: dashboardData?.totalIssuedQuantity ?? '—',
-      sublabel: 'Out Quantity',
-      subvalue: dashboardData?.totalIssuedQuantity
-        ? dashboardData.totalIssuedQuantity.toLocaleString()
-        : '—',
-      bg: 'from-amber-50 via-amber-100 to-amber-50 dark:from-amber-950 dark:via-amber-900 dark:to-amber-950',
-      border: 'border-amber-200 dark:border-amber-800',
-      text: 'text-amber-700 dark:text-amber-300',
-      iconBg: 'bg-amber-100 dark:bg-amber-900',
-      iconColor: 'text-amber-600 dark:text-amber-400',
+      title: 'Pending Indents',
+      icon: <PackageCheck size={22} />,
+      value: dashboardData?.pendingIndents ?? '—',
+      sublabel: 'Indents Waiting',
+      subvalue: dashboardData?.pendingIndents?.toLocaleString() ?? '—',
+      bgGradient: 'from-amber-400 to-orange-500',
+      shadowColor: 'shadow-orange-200 dark:shadow-orange-900/20',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
     },
     {
-      title: 'Out of Stock',
-      icon: <Warehouse size={18} />,
-      value: dashboardData?.outOfStockCount ?? '—',
-      sublabel: 'Low in Stock',
-      subvalue: dashboardData ? dashboardData.outOfStockCount.toLocaleString() : '—',
-      bg: 'from-rose-50 via-rose-100 to-rose-50 dark:from-rose-950 dark:via-rose-900 dark:to-rose-950',
-      border: 'border-rose-200 dark:border-rose-800',
-      text: 'text-rose-700 dark:text-rose-300',
-      iconBg: 'bg-rose-100 dark:bg-rose-900',
-      iconColor: 'text-rose-600 dark:text-rose-400',
+      title: 'Upcoming Indents',
+      icon: <Warehouse size={22} />,
+      value: dashboardData?.upcomingIndents ?? '—',
+      sublabel: 'Scheduled Soon',
+      subvalue: dashboardData?.upcomingIndents?.toLocaleString() ?? '—',
+      bgGradient: 'from-rose-500 to-pink-600',
+      shadowColor: 'shadow-pink-200 dark:shadow-pink-900/20',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
     },
     {
       title: 'Repair Pending',
-      icon: <FileText size={18} />,
+      icon: <Activity size={22} />,
       value: repairGatePassCounts.pending ?? '—',
       sublabel: 'Gate Pass Pending',
       subvalue: repairGatePassCounts.pending.toLocaleString() ?? '—',
-      bg: 'from-violet-50 via-violet-100 to-violet-50 dark:from-violet-950 dark:via-violet-900 dark:to-violet-950',
-      border: 'border-violet-200 dark:border-violet-800',
-      text: 'text-violet-700 dark:text-violet-300',
-      iconBg: 'bg-violet-100 dark:bg-violet-900',
-      iconColor: 'text-violet-600 dark:text-violet-400',
+      bgGradient: 'from-violet-500 to-purple-600',
+      shadowColor: 'shadow-purple-200 dark:shadow-purple-900/20',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
     },
     {
       title: 'Repair History',
-      icon: <FileText size={18} />,
+      icon: <FileText size={22} />,
       value: repairGatePassCounts.history ?? '—',
       sublabel: 'Gate Pass Received',
       subvalue: repairGatePassCounts.history.toLocaleString() ?? '—',
-      bg: 'from-cyan-50 via-cyan-100 to-cyan-50 dark:from-cyan-950 dark:via-cyan-900 dark:to-cyan-950',
-      border: 'border-cyan-200 dark:border-cyan-800',
-      text: 'text-cyan-700 dark:text-cyan-300',
-      iconBg: 'bg-cyan-100 dark:bg-cyan-900',
-      iconColor: 'text-cyan-600 dark:text-cyan-400',
+      bgGradient: 'from-cyan-500 to-blue-500',
+      shadowColor: 'shadow-cyan-200 dark:shadow-cyan-900/20',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
     },
   ];
 
@@ -195,7 +185,7 @@ export default function StoreDashboard() {
       <Loading
         heading="Store Dashboard"
         subtext="Loading dashboard insights"
-        icon={<LayoutDashboard size={48} className="text-blue-600" />}
+        icon={<LayoutDashboard size={48} className="text-indigo-600" />}
       />
     );
   }
@@ -203,332 +193,311 @@ export default function StoreDashboard() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-          <p className="font-semibold">Error loading dashboard</p>
-          <p className="text-sm">{error}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-800 shadow-sm flex flex-col items-center justify-center h-64">
+          <p className="text-lg font-semibold mb-2">Error loading dashboard</p>
+          <p className="text-sm opacity-80">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full p-4 md:p-6 lg:p-8 space-y-8 bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 min-h-screen">
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-          <LayoutDashboard size={46} className="text-white" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent dark:from-indigo-400 dark:to-purple-400">
-            Store Purchase
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Live insights from the store indent API
-          </p>
-        </div>
-      </div>
-
-      {/* Status Cards (like housekeeping) - Top Section */}
-
-      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr] mt-6">
-        <div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cards.map((card) => (
-              <Card
-                key={card.title}
-                className={`rounded-2xl bg-gradient-to-br ${card.bg} border border-slate-200 shadow-lg transition-all duration-300`}
-              >
-                <CardContent className="space-y-3 p-6">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-slate-800 dark:text-slate-200">
-                      {card.title}
-                    </p>
-                    <div
-                      className={`p-2 rounded-lg border border-white/40 ${card.iconBg}`}
-                    >
-                      <div className={card.iconColor}>{card.icon}</div>
-                    </div>
-                  </div>
-                  <p className={`text-4xl font-bold ${card.text}`}>{card.value}</p>
-                  <div className="flex items-center justify-between text-sm pt-2 border-t border-white/60">
-                    <p className="text-slate-700 dark:text-slate-200">{card.sublabel}</p>
-                    <p className={`font-semibold ${card.text}`}>{card.subvalue}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+    <div className="w-full p-4 md:p-6 lg:p-8 space-y-8 bg-slate-50/50 dark:bg-slate-950/50 min-h-screen font-sans">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 dark:shadow-indigo-900/20 transform hover:scale-105 transition-transform duration-300">
+            <LayoutDashboard size={32} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Store Dashboard
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">
+              Live overview of inventory &amp; purchases
+            </p>
           </div>
         </div>
+        {/* <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm text-sm font-medium text-slate-600 dark:text-slate-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          System Live
+        </div> */}
+      </div>
 
-        <Card className="rounded-3xl border border-slate-200 bg-white shadow-lg">
-          <CardHeader className="bg-white/80 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-100">
-                <BarChart3 className="text-blue-600" size={20} />
-              </div>
-              <CardTitle className="text-lg font-semibold text-slate-900">
-                Overall Progress
-              </CardTitle>
+      {/* Hero Metrics Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-5">
+        {cards.map((card) => (
+          <div
+            key={card.title}
+            className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br ${card.bgGradient} p-3 sm:p-6 shadow-lg ${card.shadowColor} hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}
+          >
+            {/* Background Pattern */}
+            <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4 scale-150 pointer-events-none">
+              {card.icon}
             </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center">
-              <div className="relative w-48 h-48 mx-auto md:mx-0">
-                <svg className="transform -rotate-90 w-48 h-48">
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="80"
-                    stroke="currentColor"
-                    strokeWidth="16"
-                    fill="none"
-                    className="text-slate-200"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="80"
-                    stroke="currentColor"
-                    strokeWidth="16"
-                    fill="none"
-                    strokeDasharray={`${(dashboardData?.completedPercent || 0) * 5.026} 502.6`}
-                    className="text-green-500"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="80"
-                    stroke="currentColor"
-                    strokeWidth="16"
-                    fill="none"
-                    strokeDasharray={`${(dashboardData?.pendingPercent || 0) * 5.026} 502.6`}
-                    strokeDashoffset={`-${(dashboardData?.completedPercent || 0) * 5.026}`}
-                    className="text-orange-500"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="80"
-                    stroke="currentColor"
-                    strokeWidth="16"
-                    fill="none"
-                    strokeDasharray={`${(dashboardData?.upcomingPercent || 0) * 5.026} 502.6`}
-                    strokeDashoffset={`-${((dashboardData?.completedPercent || 0) + (dashboardData?.pendingPercent || 0)) * 5.026}`}
-                    className="text-gray-400"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="80"
-                    stroke="currentColor"
-                    strokeWidth="16"
-                    fill="none"
-                    strokeDasharray={`${(dashboardData?.overduePercent || 0) * 5.026} 502.6`}
-                    strokeDashoffset={`-${((dashboardData?.completedPercent || 0) + (dashboardData?.pendingPercent || 0) + (dashboardData?.upcomingPercent || 0)) * 5.026}`}
-                    className="text-rose-500"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <p className="text-3xl font-bold text-slate-900">
-                    {dashboardData?.overallProgress?.toFixed(1) ?? 0}%
-                  </p>
-                  <p className="text-sm text-slate-500">Overall</p>
+
+            <div className="relative z-10 flex flex-col h-full justify-between">
+              <div className="flex justify-between items-start mb-2 sm:mb-4">
+                <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl ${card.iconBg} backdrop-blur-sm`}>
+                  {card.icon}
+                </div>
+                <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold bg-white/20 backdrop-blur-md px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-white/90">
+                  <ArrowUpRight size={12} className="w-3 h-3 sm:w-auto sm:h-auto" />
+                  <span className="hidden xs:inline sm:inline">View</span>
                 </div>
               </div>
-              <div className="space-y-3 flex-1">
-                {[
-                  {
-                    label: "Total Indents",
-                    color: "bg-indigo-500",
-                    value: dashboardData?.totalIndents ?? 0,
-                  },
-                  {
-                    label: "Total Purchases",
-                    color: "bg-emerald-500",
-                    value: dashboardData?.totalPurchaseOrders ?? 0,
-                  },
-                  {
-                    label: "Total Issued",
-                    color: "bg-amber-500",
-                    value: dashboardData?.totalIssuedQuantity ?? 0,
-                  },
-                  {
-                    label: "Out of Stock",
-                    color: "bg-rose-500",
-                    value: dashboardData?.outOfStockCount ?? 0,
-                  },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex w-3 h-3 rounded-full ${item.color}`}></span>
-                      <span className="text-sm font-medium text-slate-600">{item.label}</span>
+
+              <div>
+                <p className="text-white/80 font-medium text-[10px] sm:text-sm tracking-wide uppercase truncate">{card.title}</p>
+                <h3 className="text-xl sm:text-3xl font-bold text-white mt-1 mb-2 sm:mb-3 truncate">{card.value}</h3>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/20 pt-2 sm:pt-3 mt-1 gap-0.5 sm:gap-0">
+                  <p className="text-white/70 text-[10px] sm:text-xs font-medium truncate">{card.sublabel}</p>
+                  <p className="text-white font-semibold text-xs sm:text-sm truncate">{card.subvalue}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Progress Charts Section - Now wider */}
+        <div className="xl:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Circular Progress */}
+            <Card className="rounded-3xl border-0 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 overflow-hidden">
+              <CardHeader className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                    <TrendingUp size={20} />
+                  </div>
+                  <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">Overall Progress</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="flex flex-col items-center justify-center gap-8">
+                  <div className="relative w-56 h-56 flex-shrink-0">
+                    <svg className="transform -rotate-90 w-full h-full drop-shadow-lg">
+                      {/* Track */}
+                      <circle cx="50%" cy="50%" r="90" stroke="currentColor" strokeWidth="12" fill="none" className="text-slate-100 dark:text-slate-800" />
+
+                      {/* Segments - Adding simplified logic for display */}
+                      <circle cx="50%" cy="50%" r="90" stroke="currentColor" strokeWidth="12" fill="none"
+                        strokeDasharray={`${(dashboardData?.upcomingPercent || 0) * 5.65} 565`}
+                        strokeDashoffset={`-${((dashboardData?.completedPercent || 0) + (dashboardData?.pendingPercent || 0)) * 5.65}`}
+                        className="text-slate-300 dark:text-slate-600" />
+
+                      <circle cx="50%" cy="50%" r="90" stroke="currentColor" strokeWidth="12" fill="none"
+                        strokeDasharray={`${(dashboardData?.pendingPercent || 0) * 5.65} 565`}
+                        strokeDashoffset={`-${(dashboardData?.completedPercent || 0) * 5.65}`}
+                        className="text-amber-400" />
+
+                      <circle cx="50%" cy="50%" r="90" stroke="currentColor" strokeWidth="12" fill="none"
+                        strokeDasharray={`${(dashboardData?.completedPercent || 0) * 5.65} 565`}
+                        className="text-emerald-500" />
+
+                      <circle cx="50%" cy="50%" r="90" stroke="currentColor" strokeWidth="12" fill="none"
+                        strokeDasharray={`${(dashboardData?.overduePercent || 0) * 5.65} 565`}
+                        strokeDashoffset={`-${((dashboardData?.completedPercent || 0) + (dashboardData?.pendingPercent || 0) + (dashboardData?.upcomingPercent || 0)) * 5.65}`}
+                        className="text-rose-500" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-5xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+                        {dashboardData?.overallProgress?.toFixed(0) ?? 0}%
+                      </span>
+                      <span className="text-sm font-semibold text-slate-400 uppercase tracking-widest mt-1">Completed</span>
                     </div>
-                    <span className="text-sm font-semibold text-slate-900">
-                      {typeof item.value === "number"
-                        ? item.value.toLocaleString("en-IN")
-                        : item.value ?? "—"}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 w-full">
+                    {[
+                      { label: "Completed", color: "bg-emerald-500", value: dashboardData?.completedIndents, icon: <PackageCheck size={14} className="text-white" /> },
+                      { label: "Pending", color: "bg-amber-400", value: dashboardData?.pendingIndents, icon: <Truck size={14} className="text-white" /> },
+                      { label: "Overdue", color: "bg-rose-500", value: dashboardData?.overdueIndents, icon: <Activity size={14} className="text-white" /> },
+                      { label: "Upcoming", color: "bg-slate-300", value: dashboardData?.upcomingIndents, icon: <ArrowUpRight size={14} className="text-slate-600" /> },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.color} shadow-sm`}>
+                            {item.icon}
+                          </div>
+                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{item.label}</span>
+                        </div>
+                        <span className="text-lg font-bold text-slate-900 dark:text-white">{item.value?.toLocaleString() ?? 0}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Linear Progress Reports */}
+            <Card className="rounded-3xl border-0 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50">
+              <CardHeader className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                    <BarChart3 size={20} />
+                  </div>
+                  <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">Key Performance Indicators</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8 space-y-8">
+                {/* Purchase Rate */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600">
+                        <Truck size={16} />
+                      </div>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">Purchase Rate</span>
+                    </div>
+                    <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                      {dashboardData && dashboardData.totalIndents > 0
+                        ? Math.round((dashboardData.totalPurchaseOrders / dashboardData.totalIndents) * 100)
+                        : 0}%
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Original Metric Cards */}
-
-
-      {/* Progress Reports Section */}
-      <Card className="bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
-              <BarChart3 className="text-blue-600 dark:text-blue-400" size={24} />
-            </div>
-            <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">Progress Reports</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Purchase Completion Rate */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Activity className="text-indigo-600 dark:text-indigo-400" size={18} />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Purchase Completion</span>
-                </div>
-                <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                  {dashboardData && dashboardData.totalIndents > 0
-                    ? Math.round((dashboardData.totalPurchaseOrders / dashboardData.totalIndents) * 100)
-                    : 0}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${dashboardData && dashboardData.totalIndents > 0
-                      ? Math.min((dashboardData.totalPurchaseOrders / dashboardData.totalIndents) * 100, 100)
-                      : 0}%`
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                <span>Purchased: {dashboardData?.totalPurchaseOrders ?? 0}</span>
-                <span>Indented: {dashboardData?.totalIndents ?? 0}</span>
-              </div>
-            </div>
-
-            {/* Stock Utilization */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="text-emerald-600 dark:text-emerald-400" size={18} />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Stock Utilization</span>
-                </div>
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                  {dashboardData && dashboardData.totalPurchasedQuantity > 0
-                    ? Math.round((dashboardData.totalIssuedQuantity / dashboardData.totalPurchasedQuantity) * 100)
-                    : 0}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 h-3 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${dashboardData && dashboardData.totalPurchasedQuantity > 0
-                      ? Math.min((dashboardData.totalIssuedQuantity / dashboardData.totalPurchasedQuantity) * 100, 100)
-                      : 0}%`
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                <span>Issued: {dashboardData?.totalIssuedQuantity?.toLocaleString() ?? 0}</span>
-                <span>Purchased: {dashboardData?.totalPurchasedQuantity?.toLocaleString() ?? 0}</span>
-              </div>
-            </div>
-
-            {/* Repair Gate Pass Progress */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="text-violet-600 dark:text-violet-400" size={18} />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Gate Pass Progress</span>
-                </div>
-                <span className="text-lg font-bold text-violet-600 dark:text-violet-400">
-                  {repairGatePassCounts.pending + repairGatePassCounts.history > 0
-                    ? Math.round((repairGatePassCounts.history / (repairGatePassCounts.pending + repairGatePassCounts.history)) * 100)
-                    : 0}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div
-                  className="bg-gradient-to-r from-violet-500 to-purple-600 h-3 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${repairGatePassCounts.pending + repairGatePassCounts.history > 0
-                      ? Math.min((repairGatePassCounts.history / (repairGatePassCounts.pending + repairGatePassCounts.history)) * 100, 100)
-                      : 0}%`
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                <span>Received: {repairGatePassCounts.history}</span>
-                <span>Total: {repairGatePassCounts.pending + repairGatePassCounts.history}</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="min-h-[280px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 border-b border-gray-200 dark:border-gray-700">
-            <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">Top Purchased Products</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            {dashboardData?.topPurchasedItems && dashboardData.topPurchasedItems.length > 0 ? (
-              <div className="space-y-2">
-                {dashboardData.topPurchasedItems.slice(0, 10).map((item, index) => (
-                  <div key={index} className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <span className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{item.itemName}</span>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{item.orderCount} orders</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Qty: {item.totalOrderQty?.toLocaleString()}</p>
-                    </div>
+                  <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full shadow-lg"
+                      style={{ width: `${dashboardData && dashboardData.totalIndents > 0 ? Math.min((dashboardData.totalPurchaseOrders / dashboardData.totalIndents) * 100, 100) : 0}%` }}
+                    ></div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No data available</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="min-h-[280px] bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950 border-b border-gray-200 dark:border-gray-700">
-            <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">Top Vendors</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            {dashboardData?.topVendors && dashboardData.topVendors.length > 0 ? (
-              <div className="space-y-2">
-                {dashboardData.topVendors.slice(0, 10).map((vendor, index) => (
-                  <div key={index} className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <div>
-                      <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">{vendor.vendorName}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Order Qty: {vendor.totalItems.toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{vendor.uniquePoCount} Orders</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Items: {vendor.totalItems.toLocaleString()}</p>
-                    </div>
+                  <div className="flex justify-between text-xs font-medium text-slate-500">
+                    <span>{dashboardData?.totalPurchaseOrders ?? 0} Orders</span>
+                    <span>{dashboardData?.totalIndents ?? 0} Indents</span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No data available</p>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+
+                {/* Stock Utilization */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600">
+                        <Package size={16} />
+                      </div>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">Stock Utilization</span>
+                    </div>
+                    <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {dashboardData && dashboardData.totalPurchasedQuantity > 0
+                        ? Math.round((dashboardData.totalIssuedQuantity / dashboardData.totalPurchasedQuantity) * 100)
+                        : 0}%
+                    </span>
+                  </div>
+                  <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg"
+                      style={{ width: `${dashboardData && dashboardData.totalPurchasedQuantity > 0 ? Math.min((dashboardData.totalIssuedQuantity / dashboardData.totalPurchasedQuantity) * 100, 100) : 0}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs font-medium text-slate-500">
+                    <span>{dashboardData?.totalIssuedQuantity?.toLocaleString() ?? 0} Issued</span>
+                    <span>{dashboardData?.totalPurchasedQuantity?.toLocaleString() ?? 0} Acquired</span>
+                  </div>
+                </div>
+
+                {/* Gate Pass Progress */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-600">
+                        <FileText size={16} />
+                      </div>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">Gate Pass Return Rate</span>
+                    </div>
+                    <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {repairGatePassCounts.pending + repairGatePassCounts.history > 0
+                        ? Math.round((repairGatePassCounts.history / (repairGatePassCounts.pending + repairGatePassCounts.history)) * 100)
+                        : 0}%
+                    </span>
+                  </div>
+                  <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full shadow-lg"
+                      style={{ width: `${repairGatePassCounts.pending + repairGatePassCounts.history > 0 ? Math.min((repairGatePassCounts.history / (repairGatePassCounts.pending + repairGatePassCounts.history)) * 100, 100) : 0}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs font-medium text-slate-500">
+                    <span>{repairGatePassCounts.history} Returned</span>
+                    <span>{repairGatePassCounts.pending + repairGatePassCounts.history} Total</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Side Panel - Top Lists - Stacked Vertical */}
+        <div className="xl:col-span-1 space-y-6">
+          {/* Top Products */}
+          <Card className="rounded-3xl border-0 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 h-[420px] flex flex-col">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-800 py-5">
+              <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <span className="bg-orange-500 w-1.5 h-1.5 rounded-full"></span> Top 10 Products
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
+              {dashboardData?.topPurchasedItems && dashboardData.topPurchasedItems.length > 0 ? (
+                <div className="flex flex-col">
+                  {dashboardData.topPurchasedItems.slice(0, 10).map((item, index) => (
+                    <div key={index} className="flex items-center p-4 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center font-bold text-xs mr-3 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate pr-2" title={item.itemName}>{item.itemName}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 group-hover:text-slate-500">{item.totalOrderQty.toLocaleString()} units</p>
+                      </div>
+                      <div className="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold whitespace-nowrap">
+                        {item.orderCount} Orders
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                  <PackageCheck size={48} className="opacity-20 mb-2" />
+                  <p className="text-sm">No product data yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Vendors */}
+          <Card className="rounded-3xl border-0 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 h-[420px] flex flex-col">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-800 py-5">
+              <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <span className="bg-emerald-500 w-1.5 h-1.5 rounded-full"></span> Top 10 Vendors
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
+              {dashboardData?.topVendors && dashboardData.topVendors.length > 0 ? (
+                <div className="flex flex-col">
+                  {dashboardData.topVendors.slice(0, 10).map((vendor, index) => (
+                    <div key={index} className="flex items-center p-4 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center font-bold text-xs mr-3 group-hover:bg-emerald-100 group-hover:text-emerald-600 transition-colors">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate pr-2" title={vendor.vendorName}>{vendor.vendorName}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 group-hover:text-slate-500">{vendor.totalItems.toLocaleString()} items supplied</p>
+                      </div>
+                      <div className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold whitespace-nowrap">
+                        {vendor.uniquePoCount} POs
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                  <Truck size={48} className="opacity-20 mb-2" />
+                  <p className="text-sm">No vendor data yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

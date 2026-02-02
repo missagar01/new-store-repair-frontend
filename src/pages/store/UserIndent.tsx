@@ -156,7 +156,7 @@ export default function UserIndent() {
         try {
           const res: any = await storeApi.getUser(employeeId);
           if (!active) return;
-          
+
           // Match original code structure: res.data?.success && res.data.data
           if (res?.data?.success && res.data.data) {
             const apiUser = res.data.data;
@@ -201,8 +201,8 @@ export default function UserIndent() {
         const rawItems = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
-          ? res
-          : [];
+            ? res
+            : [];
 
         const normalized = (rawItems as any[])
           .map((item) => ({
@@ -242,8 +242,8 @@ export default function UserIndent() {
         const data = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
-          ? res
-          : [];
+            ? res
+            : [];
         if (Array.isArray(data)) {
           const uniqueUoms = Array.from(
             new Set(
@@ -309,8 +309,8 @@ export default function UserIndent() {
         const payload = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
-          ? res
-          : [];
+            ? res
+            : [];
 
         if (payload.length) {
           const locations = payload
@@ -366,8 +366,8 @@ export default function UserIndent() {
       const list = Array.isArray(res?.data)
         ? res.data
         : Array.isArray(res)
-        ? res
-        : [];
+          ? res
+          : [];
 
       const numbers = list
         .map((row: any) => {
@@ -487,397 +487,397 @@ export default function UserIndent() {
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-8 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100"
           >
-          {/* Header */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Department */}
-           
+            {/* Header */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Department */}
 
-            {/* Form Type */}
-            <FormField
-              control={control}
-              name="formType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Form Type</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="border border-gray-300 rounded-md h-10 px-3 text-sm w-full bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      onChange={(e) => {
-                        const v = e.target.value as 'INDENT' | 'REQUISITION' | '';
-                        field.onChange(v);
-                        // reset indentSeries & division when form type changes
-                        setValue('indentSeries', '');
-                        setValue('division', '');
-                      }}
+
+              {/* Form Type */}
+              <FormField
+                control={control}
+                name="formType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Form Type</FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        className="border border-gray-300 rounded-md h-10 px-3 text-sm w-full bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onChange={(e) => {
+                          const v = e.target.value as 'INDENT' | 'REQUISITION' | '';
+                          field.onChange(v);
+                          // reset indentSeries & division when form type changes
+                          setValue('indentSeries', '');
+                          setValue('division', '');
+                        }}
+                      >
+                        <option value="">Select Form Type</option>
+                        <option value="INDENT">Indent Form</option>
+                        <option value="REQUISITION">Requisition Form</option>
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* requester */}
+              <FormField
+                control={control}
+                name="requesterName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>User Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} readOnly className="bg-gray-100" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Indent / Requisition Series */}
+              <FormField
+                control={control}
+                name="indentSeries"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{formType === 'REQUISITION' ? 'Requisition Series' : 'Indent Series'}</FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        className="border border-gray-300 rounded-md h-10 px-3 text-sm w-full bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">
+                          {formType === 'REQUISITION'
+                            ? 'Select requisition series'
+                            : 'Select indent series'}
+                        </option>
+
+                        {formType === 'INDENT' && (
+                          <>
+                            <option value="I1">I1-INDENT-SMS</option>
+                            <option value="I3">I3-INDENT-PATRA ROLLING</option>
+                            <option value="I4">I4-PIPE MILL</option>
+                            <option value="I5">I5-INDENT- GENERAL</option>
+                          </>
+                        )}
+
+                        {formType === 'REQUISITION' && (
+                          <>
+                            <option value="R1">R1 - REQUISITION-STORE-SMS</option>
+                            <option value="R3">R3 - REQUISITION-STORE-TMT ROLLING</option>
+                            <option value="R4">R4 - REQUISITION-STORE-PIPE</option>
+                          </>
+                        )}
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* division (auto) */}
+              <FormField
+                control={control}
+                name="division"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Division</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100 cursor-not-allowed"
+                        placeholder="Auto from series"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Items */}
+            <div className="space-y-6">
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="border rounded-xl p-4 bg-slate-50 space-y-4"
+                >
+                  <div className="flex justify-between items-center">
+                    <p className="font-medium text-sm">Item {index + 1}</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => remove(index)}
+                      disabled={itemCount === 1}
                     >
-                      <option value="">Select Form Type</option>
-                      <option value="INDENT">Indent Form</option>
-                      <option value="REQUISITION">Requisition Form</option>
-                    </select>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
 
-            {/* requester */}
-            <FormField
-              control={control}
-              name="requesterName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} readOnly className="bg-gray-100" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={control}
-              name="department"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      readOnly
-                      className="bg-gray-100"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            {/* Indent / Requisition Series */}
-            <FormField
-              control={control}
-              name="indentSeries"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{formType === 'REQUISITION' ? 'Requisition Series' : 'Indent Series'}</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="border border-gray-300 rounded-md h-10 px-3 text-sm w-full bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">
-                        {formType === 'REQUISITION'
-                          ? 'Select requisition series'
-                          : 'Select indent series'}
-                      </option>
-
-                      {formType === 'INDENT' && (
-                        <>
-                          <option value="I1">I1-INDENT-SMS</option>
-                          <option value="I3">I3-INDENT-PATRA ROLLING</option>
-                          <option value="I4">I4-PIPE MILL</option>
-                          <option value="I5">I5-INDENT- GENERAL</option>
-                        </>
-                      )}
-
-                      {formType === 'REQUISITION' && (
-                        <>
-                          <option value="R1">R1 - REQUISITION-STORE-SMS</option>
-                          <option value="R3">R3 - REQUISITION-STORE-TMT ROLLING</option>
-                          <option value="R4">R4 - REQUISITION-STORE-PIPE</option>
-                        </>
-                      )}
-                    </select>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            {/* division (auto) */}
-            <FormField
-              control={control}
-              name="division"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Division</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      readOnly
-                      className="bg-gray-100 cursor-not-allowed"
-                      placeholder="Auto from series"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Items */}
-          <div className="space-y-6">
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="border rounded-xl p-4 bg-slate-50 space-y-4"
-              >
-                <div className="flex justify-between items-center">
-                  <p className="font-medium text-sm">Item {index + 1}</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => remove(index)}
-                    disabled={itemCount === 1}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Group Name */}
-                  <FormField
-                    control={control}
-                    name={`items.${index}.category`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Group Name</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            options={groupOptions}
-                            value={field.value ? [field.value] : []}
-                            onChange={(val) => {
-                              const selectedGroup = val[0] || '';
-                              field.onChange(selectedGroup);
-                              setValue(`items.${index}.productName`, '');
-                              setValue(`items.${index}.itemCode`, '');
-                            }}
-                            placeholder={
-                              loadingProducts
-                                ? 'Loading groups...'
-                                : groupOptions.length === 0
-                                ? 'No groups available'
-                                : 'Select Group'
-                            }
-                            disabled={loadingProducts || groupOptions.length === 0}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Product Name */}
-                  <FormField
-                    control={control}
-                    name={`items.${index}.productName`}
-                    render={() => {
-                      const selectedGroup = watch(`items.${index}.category`);
-                      const productOptions = storeItems
-                        .filter((item) => item.groupname === selectedGroup)
-                        .map((item) => ({
-                          label: item.itemname || '',
-                          value: item.item_code || '',
-                        }));
-
-                      return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Group Name */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.category`}
+                      render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product Name</FormLabel>
+                          <FormLabel>Group Name</FormLabel>
                           <FormControl>
                             <ComboBox
-                              options={productOptions}
-                              value={
-                                getValues(`items.${index}.itemCode`)
-                                  ? [getValues(`items.${index}.itemCode`)]
-                                  : []
-                              }
-                              onChange={(val) =>
-                                handleProductSelect(index, val[0] || '')
-                              }
+                              options={groupOptions}
+                              value={field.value ? [field.value] : []}
+                              onChange={(val) => {
+                                const selectedGroup = val[0] || '';
+                                field.onChange(selectedGroup);
+                                setValue(`items.${index}.productName`, '');
+                                setValue(`items.${index}.itemCode`, '');
+                              }}
                               placeholder={
                                 loadingProducts
-                                  ? 'Loading products...'
-                                  : !selectedGroup
-                                  ? 'Select Group first'
-                                  : productOptions.length === 0
-                                  ? 'No items in group'
-                                  : 'Select Product'
+                                  ? 'Loading groups...'
+                                  : groupOptions.length === 0
+                                    ? 'No groups available'
+                                    : 'Select Group'
                               }
-                              disabled={
-                                loadingProducts ||
-                                !selectedGroup ||
-                                productOptions.length === 0
-                              }
+                              disabled={loadingProducts || groupOptions.length === 0}
                             />
                           </FormControl>
                         </FormItem>
-                      );
-                    }}
-                  />
+                      )}
+                    />
 
-                  {/* Item Code */}
-                  <FormField
-                    control={control}
-                    name={`items.${index}.itemCode`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Item Code</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            readOnly
-                            className="bg-gray-100"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    {/* Product Name */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.productName`}
+                      render={() => {
+                        const selectedGroup = watch(`items.${index}.category`);
+                        const productOptions = storeItems
+                          .filter((item) => item.groupname === selectedGroup)
+                          .map((item) => ({
+                            label: item.itemname || '',
+                            value: item.item_code || '',
+                          }));
 
-                  {/* UOM */}
-                  <FormField
-                    control={control}
-                    name={`items.${index}.uom`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>UOM</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            options={uomOptions}
-                            value={field.value ? [field.value] : []}
-                            onChange={(val) => field.onChange(val[0] || '')}
-                            placeholder="Select UOM"
-                            disabled={uomOptions.length === 0}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                        return (
+                          <FormItem>
+                            <FormLabel>Product Name</FormLabel>
+                            <FormControl>
+                              <ComboBox
+                                options={productOptions}
+                                value={
+                                  getValues(`items.${index}.itemCode`)
+                                    ? [getValues(`items.${index}.itemCode`)]
+                                    : []
+                                }
+                                onChange={(val) =>
+                                  handleProductSelect(index, val[0] || '')
+                                }
+                                placeholder={
+                                  loadingProducts
+                                    ? 'Loading products...'
+                                    : !selectedGroup
+                                      ? 'Select Group first'
+                                      : productOptions.length === 0
+                                        ? 'No items in group'
+                                        : 'Select Product'
+                                }
+                                disabled={
+                                  loadingProducts ||
+                                  !selectedGroup ||
+                                  productOptions.length === 0
+                                }
+                              />
+                            </FormControl>
+                          </FormItem>
+                        );
+                      }}
+                    />
 
-                  {/* Qty */}
-                  <FormField
-                    control={control}
-                    name={`items.${index}.requestQty`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Required Qty</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            placeholder="Enter Qty"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    {/* Item Code */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.itemCode`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Item Code</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              readOnly
+                              className="bg-gray-100"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Make */}
-                  <FormField
-                    control={control}
-                    name={`items.${index}.make`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Make / Brand</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter Brand" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    {/* UOM */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.uom`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>UOM</FormLabel>
+                          <FormControl>
+                            <ComboBox
+                              options={uomOptions}
+                              value={field.value ? [field.value] : []}
+                              onChange={(val) => field.onChange(val[0] || '')}
+                              placeholder="Select UOM"
+                              disabled={uomOptions.length === 0}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Cost Location */}
-                  <FormField
-                    control={control}
-                    name={`items.${index}.costLocation`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cost / Project Location</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            options={costLocationOptions}
-                            value={field.value ? [field.value] : []}
-                            onChange={(val) => field.onChange(val[0] || '')}
-                            placeholder={
-                              loadingCostLocations
-                                ? 'Loading locations...'
-                                : !division
-                                  ? 'Select Division first'
-                                  : 'Select Cost Location'
-                            }
-                            disabled={!division || loadingCostLocations}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    {/* Qty */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.requestQty`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Required Qty</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              placeholder="Enter Qty"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Make */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.make`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Make / Brand</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter Brand" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Cost Location */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.costLocation`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cost / Project Location</FormLabel>
+                          <FormControl>
+                            <ComboBox
+                              options={costLocationOptions}
+                              value={field.value ? [field.value] : []}
+                              onChange={(val) => field.onChange(val[0] || '')}
+                              placeholder={
+                                loadingCostLocations
+                                  ? 'Loading locations...'
+                                  : !division
+                                    ? 'Select Division first'
+                                    : 'Select Cost Location'
+                              }
+                              disabled={!division || loadingCostLocations}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Specification + Purpose */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={control}
+                      name={`items.${index}.specification`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specification</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              rows={2}
+                              placeholder="Enter technical spec"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={control}
+                      name={`items.${index}.purpose`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Purpose / Place of Use</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              rows={2}
+                              placeholder="Enter purpose / use"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                {/* Specification + Purpose */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={control}
-                    name={`items.${index}.specification`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Specification</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            rows={2}
-                            placeholder="Enter technical spec"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={control}
-                    name={`items.${index}.purpose`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Purpose / Place of Use</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            rows={2}
-                            placeholder="Enter purpose / use"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4">
-            <Button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-10"
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() =>
-                append({
-                  category: '',
-                  productName: '',
-                  itemCode: '',
-                  uom: '',
-                  requestQty: '',
-                  make: '',
-                  specification: '',
-                  purpose: '',
-                  costLocation: '',
-                })
-              }
-            >
-              <Plus size={16} />
-              Add Product
-            </Button>
-          </div>
-        </form>
-      </Form>
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4">
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-10"
+              >
+                Submit
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() =>
+                  append({
+                    category: '',
+                    productName: '',
+                    itemCode: '',
+                    uom: '',
+                    requestQty: '',
+                    make: '',
+                    specification: '',
+                    purpose: '',
+                    costLocation: '',
+                  })
+                }
+              >
+                <Plus size={16} />
+                Add Product
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );

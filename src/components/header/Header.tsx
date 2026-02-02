@@ -112,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
 
           <div className="hidden lg:block">
             <form action="https://formbold.com/s/unique_form_id" method="POST">
-              <div className="relative">
+              {/* <div className="relative">
                 <button className="absolute -translate-y-1/2 left-4 top-1/2">
                   <svg
                     className="fill-gray-500 dark:fill-gray-400"
@@ -140,14 +140,13 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
                   <span> ⌘ </span>
                   <span> K </span>
                 </button>
-              </div>
+              </div> */}
             </form>
           </div>
         </div>
         <div
-          className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          className={`${isApplicationMenuOpen ? "flex" : "hidden"
+            } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
             <NotificationDropdown />

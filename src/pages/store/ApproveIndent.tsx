@@ -45,6 +45,13 @@ type IndentRow = {
   PO_NO?: string | null;
   PO_QTY?: number | null;
   VENDOR_TYPE?: string | null;
+
+  // New fields
+  ITEM_CODE?: string | null;
+  ACKNOWLEDGEDATE?: string | null;
+  PURCHASER?: string | null;
+  GRN_NO?: string | null;
+  GRN_DATE?: string | null;
 };
 
 type PaginationBarProps = {
@@ -132,49 +139,68 @@ function PaginationBar({
 const valStr = (v: unknown): string => (typeof v === "string" ? v : v != null ? String(v) : "");
 
 const mapData = (data: Record<string, unknown>[]): IndentRow[] =>
-  data.map((item) => ({
-    PLANNEDTIMESTAMP: valStr(item.PLANNEDTIMESTAMP ?? item.plannedtimestamp) || null,
-    INDENT_NUMBER: valStr(item.INDENT_NUMBER ?? item.indent_number),
-    INDENT_DATE: valStr(item.INDENT_DATE ?? item.indent_date),
-    INDENTER_NAME: valStr(item.INDENTER_NAME ?? item.indenter_name),
-    DIVISION: valStr(item.DIVISION ?? item.division),
-    DEPARTMENT: valStr(item.DEPARTMENT ?? item.department),
-    ITEM_NAME: valStr(item.ITEM_NAME ?? item.item_name),
-    UM: valStr(item.UM ?? item.um),
-    REQUIRED_QTY:
-      typeof item.REQUIRED_QTY === "number"
-        ? item.REQUIRED_QTY
-        : Number(item.REQUIRED_QTY ?? item.required_qty ?? 0),
-    REMARK: valStr(item.REMARK ?? item.remark),
-    SPECIFICATION: valStr(item.SPECIFICATION ?? item.specification),
-    COST_PROJECT: valStr(item.COST_PROJECT ?? item.cost_project),
-    CANCELLEDDATE: valStr(item.CANCELLEDDATE ?? item.cancelleddate) || null,
-    CANCELLED_REMARK: valStr(item.CANCELLED_REMARK ?? item.cancelled_remark) || null,
-    PO_NO: valStr(item.PO_NO ?? item.po_no) || null,
-    PO_QTY:
-      typeof item.PO_QTY === "number" ? item.PO_QTY : Number(item.PO_QTY ?? item.po_qty ?? 0),
-    VENDOR_TYPE: valStr(item.VENDOR_TYPE ?? item.vendor_type) || null,
-  }));
+  data.map((item) => {
+    // Helper for case-insensitive lookup
+    const getVal = (keys: string[]) => {
+      for (const key of keys) {
+        if (item[key] !== undefined) return item[key];
+        if (item[key.toUpperCase()] !== undefined) return item[key.toUpperCase()];
+        if (item[key.toLowerCase()] !== undefined) return item[key.toLowerCase()];
+      }
+      return undefined;
+    };
+
+    return {
+      PLANNEDTIMESTAMP: valStr(getVal(["PLANNEDTIMESTAMP", "plannedtimestamp"])) || null,
+      INDENT_NUMBER: valStr(getVal(["INDENT_NUMBER", "indent_number", "INDENT_NO", "indent_no"])),
+      INDENT_DATE: valStr(getVal(["INDENT_DATE", "indent_date"])),
+      INDENTER_NAME: valStr(getVal(["INDENTER_NAME", "indenter_name", "INDENTER", "indenter"])),
+      DIVISION: valStr(getVal(["DIVISION", "division"])),
+      DEPARTMENT: valStr(getVal(["DEPARTMENT", "department"])),
+      ITEM_NAME: valStr(getVal(["ITEM_NAME", "item_name"])),
+      UM: valStr(getVal(["UM", "um"])),
+      REQUIRED_QTY: typeof getVal(["REQUIRED_QTY", "required_qty", "QTYINDENT", "qtyindent"]) === "number"
+        ? getVal(["REQUIRED_QTY", "required_qty", "QTYINDENT", "qtyindent"]) as number
+        : Number(getVal(["REQUIRED_QTY", "required_qty", "QTYINDENT", "qtyindent"]) ?? 0),
+      REMARK: valStr(getVal(["REMARK", "remark"])),
+      SPECIFICATION: valStr(getVal(["SPECIFICATION", "specification"])),
+      COST_PROJECT: valStr(getVal(["COST_PROJECT", "cost_project"])),
+      CANCELLEDDATE: valStr(getVal(["CANCELLEDDATE", "cancelleddate"])) || null,
+      CANCELLED_REMARK: valStr(getVal(["CANCELLED_REMARK", "cancelled_remark"])) || null,
+      PO_NO: valStr(getVal(["PO_NO", "po_no", "PO_NUMBER", "po_number"])) || null,
+      PO_QTY: typeof getVal(["PO_QTY", "po_qty"]) === "number"
+        ? getVal(["PO_QTY", "po_qty"]) as number
+        : Number(getVal(["PO_QTY", "po_qty"]) ?? 0),
+      VENDOR_TYPE: valStr(getVal(["VENDOR_TYPE", "vendor_type"])) || null,
+
+      // New fields for History
+      ITEM_CODE: valStr(getVal(["ITEM_CODE", "item_code"])),
+      ACKNOWLEDGEDATE: valStr(getVal(["ACKNOWLEDGEDATE", "acknowledgedate"])),
+      PURCHASER: valStr(getVal(["PURCHASER", "purchaser"])),
+      GRN_NO: valStr(getVal(["GRN_NO", "grn_no"])),
+      GRN_DATE: valStr(getVal(["GRN_DATE", "grn_date"])),
+    };
+  });
 
 const formatDate = (dateString?: string | null) =>
   dateString
     ? new Date(dateString).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
     : "";
 
 const formatDateTime = (dateString?: string | null) =>
   dateString
     ? new Date(dateString).toLocaleString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
     : "";
 
 const schema = z
@@ -280,27 +306,27 @@ export default function ApproveIndent() {
   const pendingQuery = pendingSearch.trim().toLowerCase();
   const pendingFiltered = pendingQuery
     ? pendingAll.filter((row) => {
-        const q = pendingQuery;
-        return (
-          safeLower(row.INDENT_NUMBER).includes(q) ||
-          safeLower(row.ITEM_NAME).includes(q) ||
-          safeLower(row.DEPARTMENT).includes(q) ||
-          safeLower(row.INDENTER_NAME).includes(q)
-        );
-      })
+      const q = pendingQuery;
+      return (
+        safeLower(row.INDENT_NUMBER).includes(q) ||
+        safeLower(row.ITEM_NAME).includes(q) ||
+        safeLower(row.DEPARTMENT).includes(q) ||
+        safeLower(row.INDENTER_NAME).includes(q)
+      );
+    })
     : pendingAll;
 
   const historyQuery = historySearch.trim().toLowerCase();
   const historyFiltered = historyQuery
     ? historyAll.filter((row) => {
-        const q = historyQuery;
-        return (
-          safeLower(row.INDENT_NUMBER).includes(q) ||
-          safeLower(row.ITEM_NAME).includes(q) ||
-          safeLower(row.DEPARTMENT).includes(q) ||
-          safeLower(row.INDENTER_NAME).includes(q)
-        );
-      })
+      const q = historyQuery;
+      return (
+        safeLower(row.INDENT_NUMBER).includes(q) ||
+        safeLower(row.ITEM_NAME).includes(q) ||
+        safeLower(row.DEPARTMENT).includes(q) ||
+        safeLower(row.INDENTER_NAME).includes(q)
+      );
+    })
     : historyAll;
 
   const pendingTotal = pendingFiltered.length;
@@ -360,66 +386,66 @@ export default function ApproveIndent() {
           <ClipboardCheck size={50} className="text-primary" />
         </Heading>
 
-        <TabsList>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
+        {/* <TabsList>
+          <TabsTrigger value="pending">Pending1</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
-          {/* Pending Tab */}
-          <TabsContent value="pending">
-            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <Input
-                placeholder="Search: Indent / Item / Dept / Indenter"
-                value={pendingSearch}
-                onChange={(e) => {
-                  setPendingSearch(e.target.value);
-                  setPendingPage(1);
-                }}
-                className="w-full sm:w-[400px] md:w-[500px]"
-              />
-              <Button
-                className="w-full sm:w-auto whitespace-nowrap bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => handleDownload("pending")}
-                disabled={loading || downloadingPending}
-              >
-                {downloadingPending ? (
-                  <div className="flex items-center gap-2">
-                    <Loader size={14} color="currentColor" />
-                    Downloading...
-                  </div>
-                ) : (
-                  <>
-                    <Download size={16} className="mr-2" />
-                    Download Pending Excel
-                  </>
-                )}
-              </Button>
-            </div>
+        {/* Pending Tab */}
+        <TabsContent value="pending">
+          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              placeholder="Search: Indent / Item / Dept / Indenter"
+              value={pendingSearch}
+              onChange={(e) => {
+                setPendingSearch(e.target.value);
+                setPendingPage(1);
+              }}
+              className="w-full sm:w-[400px] md:w-[500px]"
+            />
+            <Button
+              className="w-full sm:w-auto whitespace-nowrap bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => handleDownload("pending")}
+              disabled={loading || downloadingPending}
+            >
+              {downloadingPending ? (
+                <div className="flex items-center gap-2">
+                  <Loader size={14} color="currentColor" />
+                  Downloading...
+                </div>
+              ) : (
+                <>
+                  <Download size={16} className="mr-2" />
+                  Download Pending Excel
+                </>
+              )}
+            </Button>
+          </div>
 
-            <div className="relative w-full">
-              <div className="max-h-[calc(100vh-350px)] overflow-y-auto border rounded-xl bg-white shadow-sm">
-                <table className="min-w-[1400px] text-xs border-collapse">
-                  <thead className="sticky top-0 z-20 bg-white shadow-sm">
-                    <tr>
-                      <th className="sticky left-0 z-30 bg-white border-b px-3 py-2 text-left font-semibold">
-                        Indent No.
-                      </th>
-                      <th className="bg-white border-b px-3 py-2 text-center font-semibold">S.No</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Planned Time Stamp</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Indent Date</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Indenter</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Division</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Department</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Item Name</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">UOM</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Required Qty</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Remark</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Specification</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Cost Project</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Vendor Type</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+          <div className="relative w-full">
+            <div className="max-h-[calc(100vh-350px)] overflow-y-auto border rounded-xl bg-white shadow-sm">
+              <table className="min-w-[1400px] text-xs border-collapse">
+                <thead className="sticky top-0 z-20 bg-white shadow-sm">
+                  <tr>
+                    <th className="sticky left-0 z-30 bg-white border-b px-3 py-2 text-left font-semibold">
+                      Indent No.
+                    </th>
+                    <th className="bg-white border-b px-3 py-2 text-center font-semibold">S.No</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Planned Time Stamp</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Indent Date</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Indenter</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Division</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Department</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Item Name</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">UOM</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Required Qty</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Remark</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Specification</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Cost Project</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Vendor Type</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={14} className="py-6 text-center text-slate-500 text-sm">
@@ -468,135 +494,125 @@ export default function ApproveIndent() {
                   )}
                 </tbody>
               </table>
-              </div>
             </div>
+          </div>
 
-            <PaginationBar
-              currentPage={pendingCurrentPage}
-              totalItems={pendingTotal}
-              pageSize={PAGE_SIZE}
-              isLoading={loading}
-              onPageChange={(p) => setPendingPage(Math.max(1, p))}
+          <PaginationBar
+            currentPage={pendingCurrentPage}
+            totalItems={pendingTotal}
+            pageSize={PAGE_SIZE}
+            isLoading={loading}
+            onPageChange={(p) => setPendingPage(Math.max(1, p))}
+          />
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history">
+          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              placeholder="Search: Indent / Item / Dept / Indenter"
+              value={historySearch}
+              onChange={(e) => {
+                setHistorySearch(e.target.value);
+                setHistoryPage(1);
+              }}
+              className="w-full sm:w-[400px] md:w-[500px]"
             />
-          </TabsContent>
+            <Button
+              className="w-full sm:w-auto whitespace-nowrap bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => handleDownload("history")}
+              disabled={loading || downloadingHistory}
+            >
+              {downloadingHistory ? (
+                <div className="flex items-center gap-2">
+                  <Loader size={14} color="currentColor" />
+                  Downloading...
+                </div>
+              ) : (
+                <>
+                  <Download size={16} className="mr-2" />
+                  Download History Excel
+                </>
+              )}
+            </Button>
+          </div>
 
-          {/* History Tab */}
-          <TabsContent value="history">
-            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <Input
-                placeholder="Search: Indent / Item / Dept / Indenter"
-                value={historySearch}
-                onChange={(e) => {
-                  setHistorySearch(e.target.value);
-                  setHistoryPage(1);
-                }}
-                className="w-full sm:w-[400px] md:w-[500px]"
-              />
-              <Button
-                className="w-full sm:w-auto whitespace-nowrap bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => handleDownload("history")}
-                disabled={loading || downloadingHistory}
-              >
-                {downloadingHistory ? (
-                  <div className="flex items-center gap-2">
-                    <Loader size={14} color="currentColor" />
-                    Downloading...
-                  </div>
-                ) : (
-                  <>
-                    <Download size={16} className="mr-2" />
-                    Download History Excel
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div className="relative w-full">
-              <div className="max-h-[calc(100vh-350px)] overflow-y-auto border rounded-xl bg-white shadow-sm">
-                <table className="min-w-[1600px] text-xs border-collapse">
-                  <thead className="sticky top-0 z-20 bg-white shadow-sm">
+          <div className="relative w-full">
+            <div className="max-h-[calc(100vh-350px)] overflow-y-auto border rounded-xl bg-white shadow-sm">
+              <table className="min-w-[1600px] text-xs border-collapse">
+                <thead className="sticky top-0 z-20 bg-white shadow-sm">
+                  <tr>
+                    <th className="sticky left-0 z-30 bg-white border-b px-3 py-2 text-left font-semibold">
+                      Indent No.
+                    </th>
+                    <th className="bg-white border-b px-3 py-2 text-center font-semibold">S.No</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Indent Date</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Indenter</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Division</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Department</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Item Code</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Item Name</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Qty Indent</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">UOM</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Acknowledge Date</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Purchaser</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">PO Number</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">GRN No</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">GRN Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
                     <tr>
-                      <th className="sticky left-0 z-30 bg-white border-b px-3 py-2 text-left font-semibold">
-                        Indent No.
-                      </th>
-                      <th className="bg-white border-b px-3 py-2 text-center font-semibold">S.No</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Planned Time Stamp</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Indent Date</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Indenter</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Division</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Department</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Item Name</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">UOM</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Required Qty</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Remark</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Specification</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Cost Project</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Cancelled Date & Time</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Cancelled Remark</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">PO No.</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">PO Qty</th>
-                      <th className="bg-white border-b px-3 py-2 font-semibold">Vendor Type</th>
+                      <td colSpan={15} className="py-6 text-center text-slate-500 text-sm">
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader size={16} />
+                          Loading...
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      <tr>
-                        <td colSpan={18} className="py-6 text-center text-slate-500 text-sm">
-                          <div className="flex items-center justify-center gap-2">
-                            <Loader size={16} />
-                            Loading...
-                          </div>
+                  ) : historyPageRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={15} className="py-6 text-center text-slate-400 text-sm">
+                        No History Indents Found
+                      </td>
+                    </tr>
+                  ) : (
+                    historyPageRows.map((row, index) => (
+                      <tr key={row.INDENT_NUMBER + index} className="hover:bg-slate-50">
+                        <td className="sticky left-0 z-10 bg-white border-b px-3 py-1 text-left font-medium">
+                          {row.INDENT_NUMBER}
                         </td>
+                        <td className="border-b px-2 py-1 text-center">{historyStartIndex + index + 1}</td>
+                        <td className="border-b px-2 py-1">{formatDate(row.INDENT_DATE)}</td>
+                        <td className="border-b px-2 py-1">{row.INDENTER_NAME}</td>
+                        <td className="border-b px-2 py-1">{row.DIVISION}</td>
+                        <td className="border-b px-2 py-1">{row.DEPARTMENT}</td>
+                        <td className="border-b px-2 py-1">{row.ITEM_CODE}</td>
+                        <td className="border-b px-2 py-1">{row.ITEM_NAME}</td>
+                        <td className="border-b px-2 py-1">{row.REQUIRED_QTY}</td>
+                        <td className="border-b px-2 py-1">{row.UM}</td>
+                        <td className="border-b px-2 py-1">{formatDate(row.ACKNOWLEDGEDATE)}</td>
+                        <td className="border-b px-2 py-1">{row.PURCHASER}</td>
+                        <td className="border-b px-2 py-1">{row.PO_NO}</td>
+                        <td className="border-b px-2 py-1">{row.GRN_NO}</td>
+                        <td className="border-b px-2 py-1">{row.GRN_DATE}</td>
                       </tr>
-                    ) : historyPageRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={18} className="py-6 text-center text-slate-400 text-sm">
-                          No History Indents Found
-                        </td>
-                      </tr>
-                    ) : (
-                      historyPageRows.map((row, index) => (
-                        <tr key={row.INDENT_NUMBER + index} className="hover:bg-slate-50">
-                          <td className="sticky left-0 z-10 bg-white border-b px-3 py-1 text-left font-medium">
-                            {row.INDENT_NUMBER}
-                          </td>
-                          <td className="border-b px-2 py-1 text-center">{historyStartIndex + index + 1}</td>
-                          <td className="border-b px-2 py-1">{formatDateTime(row.PLANNEDTIMESTAMP)}</td>
-                          <td className="border-b px-2 py-1">{formatDate(row.INDENT_DATE)}</td>
-                          <td className="border-b px-2 py-1">{row.INDENTER_NAME}</td>
-                          <td className="border-b px-2 py-1">{row.DIVISION}</td>
-                          <td className="border-b px-2 py-1">{row.DEPARTMENT}</td>
-                          <td className="border-b px-2 py-1">{row.ITEM_NAME}</td>
-                          <td className="border-b px-2 py-1">{row.UM}</td>
-                          <td className="border-b px-2 py-1">{row.REQUIRED_QTY}</td>
-                          <td className="border-b px-2 py-1">{row.REMARK}</td>
-                          <td className="border-b px-2 py-1">{row.SPECIFICATION}</td>
-                          <td className="border-b px-2 py-1">{row.COST_PROJECT}</td>
-                          <td className="border-b px-2 py-1">{formatDateTime(row.CANCELLEDDATE)}</td>
-                          <td className="border-b px-2 py-1">{row.CANCELLED_REMARK}</td>
-                          <td className="border-b px-2 py-1">{row.PO_NO}</td>
-                          <td className="border-b px-2 py-1">{row.PO_QTY}</td>
-                          <td className="border-b px-2 py-1">
-                            <Pill variant={row.VENDOR_TYPE === "Reject" ? "reject" : row.VENDOR_TYPE ? "primary" : "secondary"}>
-                              {row.VENDOR_TYPE || "Pending"}
-                            </Pill>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
+          </div>
 
-            <PaginationBar
-              currentPage={historyCurrentPage}
-              totalItems={historyTotal}
-              pageSize={PAGE_SIZE}
-              isLoading={loading}
-              onPageChange={(p) => setHistoryPage(Math.max(1, p))}
-            />
-          </TabsContent>
+          <PaginationBar
+            currentPage={historyCurrentPage}
+            totalItems={historyTotal}
+            pageSize={PAGE_SIZE}
+            isLoading={loading}
+            onPageChange={(p) => setHistoryPage(Math.max(1, p))}
+          />
+        </TabsContent>
       </Tabs>
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>

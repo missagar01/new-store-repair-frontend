@@ -5,7 +5,7 @@ export default function NotificationDropdown() {
 
   return (
     <div className="relative">
-      <button
+      {/* <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="flex items-center gap-2 text-gray-700 dark:text-gray-400"
       >
@@ -23,7 +23,7 @@ export default function NotificationDropdown() {
             No new notifications yet.
           </p>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
