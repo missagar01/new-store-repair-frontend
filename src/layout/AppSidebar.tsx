@@ -77,8 +77,8 @@ const AppSidebar: React.FC = () => {
   // Build store menu based on role/employee (mirrors StoreFMS logic)
   const employeeId = (user?.employee_id || "").toUpperCase();
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
-  const isStoreOutOnly = employeeId === "S07632" || employeeId === "S08088";
-  const isApproveIndentOnly = employeeId === "S00116";
+  const isStoreOutOnly = employeeId === "S00000" || employeeId === "S00000";
+  const isApproveIndentOnly = employeeId === "S00000";
   const hideUserProfileSection = location.pathname === "/store/dashboard";
 
   const storeAccessList = useMemo(() => {
