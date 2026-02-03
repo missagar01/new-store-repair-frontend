@@ -142,7 +142,7 @@ const extractStringField = (
 
 const normalize = (po: Partial<POData> | Record<string, unknown>, index = 0): POData => {
   const raw = po as Record<string, unknown>;
-  
+
   // Debug logging for first 3 items
   if (index < 3) {
     // console.log(`[Normalize ${index}] Raw data keys:`, Object.keys(raw));
@@ -156,11 +156,11 @@ const normalize = (po: Partial<POData> | Record<string, unknown>, index = 0): PO
       });
     }
   }
-  
+
   const order = Number(raw.QTYORDER) || 0;
   const exec = Number(raw.QTYEXECUTE) || 0;
   const balance = raw.BALANCE_QTY != null ? Number(raw.BALANCE_QTY) : Math.max(order - exec, 0);
-  
+
   // Try direct access first (most common case - uppercase from OracleDB)
   let indentNo = "";
   const indentValue = raw.INDENT_NO;
@@ -169,15 +169,15 @@ const normalize = (po: Partial<POData> | Record<string, unknown>, index = 0): PO
   } else {
     // Fallback to extractStringField which tries multiple variations
     indentNo = extractStringField(raw, INDENT_FIELD_KEYS);
-    
+
     // If still empty, try to find any key containing "indent" (case insensitive)
     if (!indentNo) {
       const indentKey = Object.keys(raw).find(k => {
         const val = raw[k];
-        return k.toLowerCase().includes('indent') && 
-               val != null && 
-               val !== "" &&
-               val !== undefined;
+        return k.toLowerCase().includes('indent') &&
+          val != null &&
+          val !== "" &&
+          val !== undefined;
       });
       if (indentKey) {
         const value = raw[indentKey];
@@ -187,7 +187,7 @@ const normalize = (po: Partial<POData> | Record<string, unknown>, index = 0): PO
       }
     }
   }
-  
+
   // if (index < 3) {
   //   console.log(`[Normalize ${index}] Final extracted INDENT_NO:`, indentNo);
   // }
@@ -224,7 +224,7 @@ export default function PendingIndents() {
     try {
       const res = await storeApi.getPoPending();
       // console.log("✅ Pending API Full Response:", JSON.stringify(res, null, 2));
-      
+
       // Handle response structure: { success: true, total: number, data: [...] }
       let rows: unknown[] = [];
       if (res && typeof res === 'object') {
@@ -235,7 +235,7 @@ export default function PendingIndents() {
           rows = res;
         }
       }
-      
+
       // console.log("✅ Pending Rows count:", rows.length);
       // if (rows.length > 0) {
       //   const firstRow = rows[0] as Record<string, unknown>;
@@ -244,13 +244,13 @@ export default function PendingIndents() {
       //   console.log("✅ First row INDENT_NO:", firstRow.INDENT_NO, typeof firstRow.INDENT_NO);
       //   console.log("✅ First row INDENTER:", firstRow.INDENTER, typeof firstRow.INDENTER);
       // }
-      
+
       const normalized = rows.map((row, idx) => normalize(row, idx));
       // console.log("✅ Normalized Pending Data (first 3):", normalized.slice(0, 3));
       if (normalized.length > 0) {
         // console.log("✅ First normalized INDENT_NO:", normalized[0]?.INDENT_NO);
       }
-      
+
       setPendingAll(normalized);
       setPendingPage(1);
     } catch (error) {
@@ -263,7 +263,7 @@ export default function PendingIndents() {
     try {
       const res = await storeApi.getPoHistory();
       // console.log("✅ History API Full Response:", JSON.stringify(res, null, 2));
-      
+
       // Handle response structure: { success: true, total: number, data: [...] }
       let rows: unknown[] = [];
       if (res && typeof res === 'object') {
@@ -274,7 +274,7 @@ export default function PendingIndents() {
           rows = res;
         }
       }
-      
+
       // console.log("✅ History Rows count:", rows.length);
       if (rows.length > 0) {
         const firstRow = rows[0] as Record<string, unknown>;
@@ -283,13 +283,13 @@ export default function PendingIndents() {
         // console.log("✅ First row INDENT_NO:", firstRow.INDENT_NO, typeof firstRow.INDENT_NO);
         // console.log("✅ First row INDENTER:", firstRow.INDENTER, typeof firstRow.INDENTER);
       }
-      
+
       const normalized = rows.map((row, idx) => normalize(row, idx));
       // console.log("✅ Normalized History Data (first 3):", normalized.slice(0, 3));
       if (normalized.length > 0) {
         // console.log("✅ First normalized INDENT_NO:", normalized[0]?.INDENT_NO);
       }
-      
+
       setHistoryAll(normalized);
       setHistoryPage(1);
     } catch (error) {
@@ -298,7 +298,7 @@ export default function PendingIndents() {
     }
   };
 
- 
+
 
   const fetchInitial = async () => {
     try {
@@ -351,27 +351,27 @@ export default function PendingIndents() {
   const pendingQuery = pendingSearch.trim().toLowerCase();
   const pendingFiltered = pendingQuery
     ? pendingAll.filter((row) => {
-        const q = pendingQuery;
+      const q = pendingQuery;
       return (
         (row.VRNO || "").toLowerCase().includes(q) ||
         (row.INDENT_NO || "").toLowerCase().includes(q) ||
         (row.VENDOR_NAME || "").toLowerCase().includes(q) ||
-          (row.ITEM_NAME || "").toLowerCase().includes(q)
-        );
-      })
+        (row.ITEM_NAME || "").toLowerCase().includes(q)
+      );
+    })
     : pendingAll;
 
   const historyQuery = historySearch.trim().toLowerCase();
   const historyFiltered = historyQuery
     ? historyAll.filter((row) => {
-        const q = historyQuery;
+      const q = historyQuery;
       return (
         (row.VRNO || "").toLowerCase().includes(q) ||
         (row.INDENT_NO || "").toLowerCase().includes(q) ||
         (row.VENDOR_NAME || "").toLowerCase().includes(q) ||
-          (row.ITEM_NAME || "").toLowerCase().includes(q)
-        );
-      })
+        (row.ITEM_NAME || "").toLowerCase().includes(q)
+      );
+    })
     : historyAll;
 
   const pendingTotal = pendingFiltered.length;
@@ -456,9 +456,9 @@ export default function PendingIndents() {
                     <th className="sticky left-0 z-30 bg-slate-100 border-b px-3 py-2 text-left font-semibold">
                       Indent No
                     </th>
-                        <th className="bg-slate-100 border-b px-3 py-2 text-center font-semibold">S.No</th>
+                    <th className="bg-slate-100 border-b px-3 py-2 text-center font-semibold">S.No</th>
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">Indenter</th>
-                
+
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">PO No.</th>
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">Planned Time Stamp</th>
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">PO Date</th>
@@ -490,13 +490,13 @@ export default function PendingIndents() {
                     pendingPageRows.map((row, index) => (
                       <tr key={row.VRNO + index} className="hover:bg-slate-50">
                         <td className="sticky left-0 z-10 bg-white border-b px-3 py-1 text-left font-medium">
-                          {  row.INDENT_NO} 
+                          {row.INDENT_NO}
                         </td>
-                           <td className="border-b px-2 py-1 text-center">
+                        <td className="border-b px-2 py-1 text-center">
                           {pendingStartIndex + index + 1}
                         </td>
                         <td className="border-b px-2 py-1">{row.INDENTER}</td>
-                     
+
                         <td className="border-b px-2 py-1">  {row.VRNO}  </td>
                         <td className="border-b px-2 py-1">
                           {formatDateTime(row.PLANNED_TIMESTAMP)}
@@ -560,12 +560,12 @@ export default function PendingIndents() {
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
                   <tr>
                     <th className="sticky left-0 z-30 bg-slate-100 border-b px-3 py-2 text-left font-semibold">
-                    Indent No.
+                      Indent No.
                     </th>
-                      <th className="bg-slate-100 border-b px-3 py-2 text-center font-semibold">S.No</th>
+                    <th className="bg-slate-100 border-b px-3 py-2 text-center font-semibold">S.No</th>
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">    PO No.    </th>
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">Indenter</th>
-                  
+
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">Planned Time Stamp</th>
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">PO Date</th>
                     <th className="bg-slate-100 border-b px-3 py-2 font-semibold">Vendor Name</th>
@@ -577,9 +577,9 @@ export default function PendingIndents() {
                   </tr>
                 </thead>
                 <tbody>
-                    {loading ? (
-                      <tr>
-                        <td colSpan={12} className="py-6 text-center text-slate-500 text-sm">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={12} className="py-6 text-center text-slate-500 text-sm">
                         <div className="flex items-center justify-center gap-2">
                           <Loader size={16} />
                           Loading...
@@ -587,8 +587,8 @@ export default function PendingIndents() {
                       </td>
                     </tr>
                   ) : historyPageRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={12} className="py-6 text-center text-slate-400 text-sm">
+                    <tr>
+                      <td colSpan={12} className="py-6 text-center text-slate-400 text-sm">
                         No Received POs Found
                       </td>
                     </tr>
@@ -596,14 +596,14 @@ export default function PendingIndents() {
                     historyPageRows.map((row, index) => (
                       <tr key={row.VRNO + index} className="hover:bg-slate-50">
                         <td className="sticky left-0 z-10 bg-white border-b px-3 py-1 text-left font-medium">
-                           {row.INDENT_NO} 
+                          {row.INDENT_NO}
                         </td>
-                          <td className="border-b px-2 py-1 text-center">
+                        <td className="border-b px-2 py-1 text-center">
                           {historyStartIndex + index + 1}
                         </td>
                         <td className="border-b px-2 py-1">  {row.VRNO}  </td>
                         <td className="border-b px-2 py-1">{row.INDENTER}</td>
-                      
+
                         <td className="border-b px-2 py-1">
                           {formatDateTime(row.PLANNED_TIMESTAMP)}
                         </td>

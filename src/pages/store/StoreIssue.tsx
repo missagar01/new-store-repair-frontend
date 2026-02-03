@@ -15,6 +15,17 @@ import { Input } from "../../components/ui/input";
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 
+// Custom style to show calendar picker icon (required for iframe compatibility)
+const dateInputStyle = `
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    display: block !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+`;
+
 type StoreIssueData = {
     VRNO: string;
     VRDATE: string;
@@ -172,6 +183,7 @@ const StoreIssue = () => {
 
     return (
         <div className="w-full p-4 md:p-6 lg:p-8 space-y-6">
+            <style>{dateInputStyle}</style>
             <Heading
                 heading="Store Issue"
                 subtext="View material issue transactions (MS)"
@@ -246,7 +258,13 @@ const StoreIssue = () => {
                                 type="date"
                                 className="h-10 rounded-xl border-slate-200 text-xs cursor-pointer"
                                 value={fromDate}
-                                onClick={(e) => e.currentTarget.showPicker?.()}
+                                onClick={(e) => {
+                                    try {
+                                        e.currentTarget.showPicker?.();
+                                    } catch (err) {
+                                        console.warn("showPicker() restricted:", err);
+                                    }
+                                }}
                                 onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
                             />
                         </div>
@@ -258,7 +276,13 @@ const StoreIssue = () => {
                                     type="date"
                                     className="h-10 rounded-xl border-slate-200 text-xs flex-1 cursor-pointer"
                                     value={toDate}
-                                    onClick={(e) => e.currentTarget.showPicker?.()}
+                                    onClick={(e) => {
+                                        try {
+                                            e.currentTarget.showPicker?.();
+                                        } catch (err) {
+                                            console.warn("showPicker() restricted:", err);
+                                        }
+                                    }}
                                     onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
                                 />
                                 <Button

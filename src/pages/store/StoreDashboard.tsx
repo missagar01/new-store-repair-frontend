@@ -14,6 +14,7 @@ type DashboardApiResponse = {
     pendingIndents: number;
     upcomingIndents: number;
     overdueIndents: number;
+    pendingPurchaseOrders: number;
 
     // Progress percentages
     overallProgress: number;
@@ -146,17 +147,6 @@ export default function StoreDashboard() {
       textColor: 'text-white',
     },
     {
-      title: 'Upcoming Indents',
-      icon: <Warehouse size={22} />,
-      value: dashboardData?.upcomingIndents ?? '—',
-      sublabel: 'Scheduled Soon',
-      subvalue: dashboardData?.upcomingIndents?.toLocaleString() ?? '—',
-      bgGradient: 'from-rose-500 to-pink-600',
-      shadowColor: 'shadow-pink-200 dark:shadow-pink-900/20',
-      iconBg: 'bg-white/20',
-      textColor: 'text-white',
-    },
-    {
       title: 'Repair Pending',
       icon: <Activity size={22} />,
       value: repairGatePassCounts.pending ?? '—',
@@ -164,6 +154,17 @@ export default function StoreDashboard() {
       subvalue: repairGatePassCounts.pending.toLocaleString() ?? '—',
       bgGradient: 'from-violet-500 to-purple-600',
       shadowColor: 'shadow-purple-200 dark:shadow-purple-900/20',
+      iconBg: 'bg-white/20',
+      textColor: 'text-white',
+    },
+    {
+      title: 'Pending PO',
+      icon: <FileText size={22} />,
+      value: dashboardData?.pendingPurchaseOrders ?? '—',
+      sublabel: 'POs Waiting',
+      subvalue: dashboardData?.pendingPurchaseOrders?.toLocaleString() ?? '—',
+      bgGradient: 'from-rose-500 to-pink-600',
+      shadowColor: 'shadow-pink-200 dark:shadow-pink-900/20',
       iconBg: 'bg-white/20',
       textColor: 'text-white',
     },

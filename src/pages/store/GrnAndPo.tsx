@@ -11,6 +11,22 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import Loading from "./Loading";
 
+// Custom style to show calendar picker icon (required for iframe compatibility)
+const dateInputStyle = `
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    display: block !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    background: transparent !important;
+    color: transparent !important;
+  }
+`;
+
 type SummaryData = {
     TCODE: string;
     ENTITY_CODE: string;
@@ -62,6 +78,7 @@ const GrnAndPo = () => {
 
     return (
         <div className="w-full p-4 md:p-6 lg:p-8 space-y-8 bg-slate-50/50 dark:bg-slate-950/50 min-h-screen font-sans">
+            <style>{dateInputStyle}</style>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="p-3.5 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 dark:shadow-indigo-900/20 transform hover:scale-105 transition-transform duration-300">
@@ -91,9 +108,13 @@ const GrnAndPo = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 bg-slate-50 dark:bg-slate-800 p-2 rounded-2xl border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 cursor-pointer" onClick={(e) => {
-                            const input = e.currentTarget.querySelector('input');
-                            if (input) input.showPicker();
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 cursor-pointer relative" onClick={(e) => {
+                            try {
+                                const input = e.currentTarget.querySelector('input');
+                                if (input) input.showPicker();
+                            } catch (err) {
+                                console.warn("showPicker() restricted:", err);
+                            }
                         }}>
                             <Calendar size={14} className="text-slate-400 shrink-0" />
                             <input
@@ -104,9 +125,13 @@ const GrnAndPo = () => {
                             />
                         </div>
                         <ArrowRight size={14} className="text-slate-400 hidden sm:block" />
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 cursor-pointer" onClick={(e) => {
-                            const input = e.currentTarget.querySelector('input');
-                            if (input) input.showPicker();
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 cursor-pointer relative" onClick={(e) => {
+                            try {
+                                const input = e.currentTarget.querySelector('input');
+                                if (input) input.showPicker();
+                            } catch (err) {
+                                console.warn("showPicker() restricted:", err);
+                            }
                         }}>
                             <Calendar size={14} className="text-slate-400 shrink-0" />
                             <input
@@ -137,7 +162,7 @@ const GrnAndPo = () => {
                                             <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">{type} Transactions</h3>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {users.map((userCode) => {
                                                 const item = summaryData.find(
                                                     (d) => getTypeName(d.TCODE) === type && d.ENTITY_CODE.toLowerCase() === userCode
