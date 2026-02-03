@@ -468,7 +468,7 @@ export default function ApproveIndent() {
                         className="hover:bg-slate-50 cursor-pointer"
                         onClick={() => {
                           setSelectedIndent(row);
-                          setOpenDialog(true);
+                          // setOpenDialog(true);
                         }}
                       >
                         <td className="sticky left-0 z-10 bg-white border-b px-3 py-1 text-left font-medium">
