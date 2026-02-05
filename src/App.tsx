@@ -32,6 +32,7 @@ import StoreGRNGM from "./pages/store/StoreGRNGMApproval";
 import StoreGRNCloseBill from "./pages/store/StoreGRNCloseBill";
 import GrnAndPo from "./pages/store/GrnAndPo";
 import StoreIssue from "./pages/store/StoreIssue";
+import ReturnablePage from "./pages/store/ReturnablePage";
 
 // Store page aliases for routing
 const PoPending = PendingPOs;
@@ -106,6 +107,7 @@ function AppRoutes() {
         <Route path="/store/store-grn-close" element={<StoreGRNCloseBill />} />
         <Route path="/store/grn-po" element={<GrnAndPo />} />
         <Route path="/store/store-issue" element={<StoreIssue />} />
+        <Route path="/store/returnable" element={<ReturnablePage />} />
 
         <Route path="/store/loading" element={<Loading />} />
         <Route path="/indent/all" element={<IndentAll />} />

@@ -33,6 +33,7 @@ const STORE_ACCESS_OPTIONS = [
     "Store Out Approval",
     "Completed Items",
     "Approve Indent Data",
+    "Returnable",
 ];
 
 /* ================= COMPONENT ================= */

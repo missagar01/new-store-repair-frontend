@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Store, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -104,8 +104,8 @@ export default function Inventory() {
   const dd = String(today.getDate()).padStart(2, "0");
   const todayStr = `${yyyy}-${mm}-${dd}`;
 
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [fromDate, setFromDate] = useState(todayStr);
+  const [toDate, setToDate] = useState(todayStr);
   const [allRows, setAllRows] = useState<StockRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -204,6 +204,11 @@ export default function Inventory() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchStock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredRows = useMemo(() => {
     const q = searchText.trim().toLowerCase();

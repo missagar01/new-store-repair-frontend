@@ -153,7 +153,7 @@ const GrnAndPo = () => {
                         <>
                             {["GRN", "PO"].map((type) => {
                                 const isGRN = type === "GRN";
-                                const users = ["sr", "pa", "al"];
+                                const users = ["sr"];
 
                                 return (
                                     <div key={type} className="space-y-4">
@@ -209,3 +209,4 @@ const GrnAndPo = () => {
 };
 
 export default GrnAndPo;
+

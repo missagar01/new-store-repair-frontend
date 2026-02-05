@@ -175,4 +175,8 @@ export const storeApi = {
   // User APIs
   getUser: (employeeId: string) => apiRequest(`/user/${employeeId}`),
   getMe: () => apiRequest("/user/me"),
+
+  // Returnable APIs
+  getReturnableStats: () => apiRequest("/returnable/stats"),
+  getReturnableDetails: () => apiRequest("/returnable/details"),
 };
