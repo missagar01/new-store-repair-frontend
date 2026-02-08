@@ -25,6 +25,7 @@ type IndentRow = {
   purpose?: string;
   costLocation?: string;
   requestStatus?: string;
+  gmApproval?: string;
 };
 
 export default function UserIndentList() {
@@ -69,6 +70,7 @@ export default function UserIndentList() {
             purpose: String(r.purpose ?? ""),
             costLocation: String(r.cost_location ?? r.costLocation ?? ""),
             requestStatus: String(r.request_status ?? r.requestStatus ?? ""),
+            gmApproval: String(r.gm_approval ?? r.gmApproval ?? ""),
           }))
           .filter((r: IndentRow) => (r.formType || "").toUpperCase() === "INDENT");
 
@@ -203,7 +205,7 @@ export default function UserIndentList() {
     { accessorKey: "costLocation", header: "Cost Location" },
     {
       accessorKey: "requestStatus",
-      header: "Status",
+      header: "HOD Status",
       cell: ({ row }) => {
         const status = row.original.requestStatus?.toUpperCase();
         if (status === "APPROVED") {
@@ -218,6 +220,33 @@ export default function UserIndentList() {
         return (
           <span className="text-gray-500">{row.original.requestStatus}</span>
         );
+      },
+    },
+    {
+      accessorKey: "gmApproval",
+      header: "GM Status",
+      cell: ({ row }) => {
+        const hodStatus = row.original.requestStatus?.toUpperCase();
+        const gmStatus = row.original.gmApproval?.toUpperCase();
+
+        if (gmStatus === "APPROVED") {
+          return <span className="font-medium text-green-600">APPROVED</span>;
+        }
+        if (gmStatus === "REJECTED") {
+          return <span className="font-medium text-red-600">REJECTED</span>;
+        }
+
+        // If HOD rejected, GM is irrelevant
+        if (hodStatus === "REJECTED") {
+          return <span className="text-gray-400">—</span>;
+        }
+
+        // If HOD pending, GM is pending HOD
+        if (hodStatus === "PENDING" || !hodStatus) {
+          return <span className="text-gray-400 italic">Pending HOD</span>;
+        }
+
+        return <span className="font-medium text-blue-600">PENDING GM</span>;
       },
     },
   ];

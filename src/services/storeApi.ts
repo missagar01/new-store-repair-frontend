@@ -101,6 +101,12 @@ export const storeApi = {
       body: JSON.stringify(data),
     }),
 
+  updateGMIndentStatus: (requestNumber: string, data: any) =>
+    apiRequest(`/indent/${requestNumber}/status`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
   updateIndentNumber: (requestNumber: string, indentNumber: string) =>
     apiRequest(`/indent/${requestNumber}/indent-number`, {
       method: "PATCH",
@@ -179,4 +185,22 @@ export const storeApi = {
   // Returnable APIs
   getReturnableStats: () => apiRequest("/returnable/stats"),
   getReturnableDetails: () => apiRequest("/returnable/details"),
+  getHOD: (department: string) => apiRequest(`/auth/hod/${department}`),
+
+  // Department CRUD
+  getDepartments: () => apiRequest("/departments"),
+  createDepartment: (data: any) =>
+    apiRequest("/departments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateDepartment: (id: number | string, data: any) =>
+    apiRequest(`/departments/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteDepartment: (id: number | string) =>
+    apiRequest(`/departments/${id}`, {
+      method: "DELETE",
+    }),
 };

@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ClipboardCheck, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { z } from "zod";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useStoreDashboard } from "../../context/StoreDashboardContext";
 
 import Heading from "../../components/element/Heading";
 import { Button } from "../../components/ui/button";
@@ -182,26 +183,27 @@ const mapData = (data: Record<string, unknown>[]): IndentRow[] =>
     };
   });
 
-const formatDate = (dateString?: string | null) =>
-  dateString
-    ? new Date(dateString).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-    : "";
+const formatDate = (date: any) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
-const formatDateTime = (dateString?: string | null) =>
-  dateString
-    ? new Date(dateString).toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
-    : "";
+const formatDateTime = (date: any) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const mins = String(d.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${mins}`;
+};
 
 const schema = z
   .object({
@@ -219,8 +221,13 @@ const schema = z
   });
 
 export default function ApproveIndent() {
-  const [pendingAll, setPendingAll] = useState<IndentRow[]>([]);
-  const [historyAll, setHistoryAll] = useState<IndentRow[]>([]);
+  const {
+    pendingIndents: rawPending,
+    historyIndents: rawHistory,
+    isLoading: contextLoading,
+    refreshData
+  } = useStoreDashboard();
+
   const [pendingPage, setPendingPage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
   const [pendingSearch, setPendingSearch] = useState("");
@@ -231,47 +238,24 @@ export default function ApproveIndent() {
   const [selectedIndent, setSelectedIndent] = useState<IndentRow | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
 
+  // Map data in useMemo
+  const pendingAll = useMemo(() => mapData(rawPending as any[]), [rawPending]);
+  const historyAll = useMemo(() => mapData(rawHistory as any[]), [rawHistory]);
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { vendorType: undefined, approvedQuantity: undefined },
   });
   const vendorType = form.watch("vendorType");
 
-  const fetchPending = async () => {
-    const res = await storeApi.getPendingIndents();
-    const resData = (res as { data?: unknown })?.data;
-    const raw = Array.isArray(resData) ? resData : Array.isArray(res) ? (res as unknown[]) : [];
-    const data = raw as Record<string, unknown>[];
-    setPendingAll(mapData(data));
-    setPendingPage(1);
-  };
-
-  const fetchHistory = async () => {
-    const res = await storeApi.getHistoryIndents();
-    const resData = (res as { data?: unknown })?.data;
-    const raw = Array.isArray(resData) ? resData : Array.isArray(res) ? (res as unknown[]) : [];
-    const data = raw as Record<string, unknown>[];
-    setHistoryAll(mapData(data));
-    setHistoryPage(1);
-  };
-
+  // Sync core loading state with context loading if we don't have data yet
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        setLoading(true);
-        await Promise.all([fetchPending(), fetchHistory()]);
-      } catch (err) {
-        if (active) toast.error("Failed to fetch indents");
-        console.error(err);
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (contextLoading && pendingAll.length === 0 && historyAll.length === 0) {
+      setLoading(true);
+    } else {
+      setLoading(false);
+    }
+  }, [contextLoading, pendingAll.length, historyAll.length]);
 
   const handleDownload = async (type: "pending" | "history") => {
     try {
@@ -303,31 +287,43 @@ export default function ApproveIndent() {
     }
   };
 
-  const pendingQuery = pendingSearch.trim().toLowerCase();
-  const pendingFiltered = pendingQuery
-    ? pendingAll.filter((row) => {
-      const q = pendingQuery;
-      return (
-        safeLower(row.INDENT_NUMBER).includes(q) ||
-        safeLower(row.ITEM_NAME).includes(q) ||
-        safeLower(row.DEPARTMENT).includes(q) ||
-        safeLower(row.INDENTER_NAME).includes(q)
-      );
-    })
-    : pendingAll;
+  const pendingFiltered = useMemo(() => {
+    const q = pendingSearch.trim().toLowerCase();
+    if (!q) return pendingAll;
+    return pendingAll.filter((row) =>
+      Object.entries(row).some(([key, val]) => {
+        if (val == null) return false;
+        const strVal = val.toString().toLowerCase();
+        if (strVal.includes(q)) return true;
 
-  const historyQuery = historySearch.trim().toLowerCase();
-  const historyFiltered = historyQuery
-    ? historyAll.filter((row) => {
-      const q = historyQuery;
-      return (
-        safeLower(row.INDENT_NUMBER).includes(q) ||
-        safeLower(row.ITEM_NAME).includes(q) ||
-        safeLower(row.DEPARTMENT).includes(q) ||
-        safeLower(row.INDENTER_NAME).includes(q)
-      );
-    })
-    : historyAll;
+        const k = key.toLowerCase();
+        if (k.includes('date') || k.includes('timestamp')) {
+          const formatted = formatDate(val);
+          if (formatted && formatted.toLowerCase().includes(q)) return true;
+        }
+        return false;
+      })
+    );
+  }, [pendingAll, pendingSearch]);
+
+  const historyFiltered = useMemo(() => {
+    const q = historySearch.trim().toLowerCase();
+    if (!q) return historyAll;
+    return historyAll.filter((row) =>
+      Object.entries(row).some(([key, val]) => {
+        if (val == null) return false;
+        const strVal = val.toString().toLowerCase();
+        if (strVal.includes(q)) return true;
+
+        const k = key.toLowerCase();
+        if (k.includes('date') || k.includes('timestamp')) {
+          const formatted = formatDate(val);
+          if (formatted && formatted.toLowerCase().includes(q)) return true;
+        }
+        return false;
+      })
+    );
+  }, [historyAll, historySearch]);
 
   const pendingTotal = pendingFiltered.length;
   const pendingTotalPages = Math.max(1, Math.ceil(pendingTotal / PAGE_SIZE) || 1);
@@ -367,7 +363,7 @@ export default function ApproveIndent() {
       toast.success(`Indent ${selectedIndent?.INDENT_NUMBER} updated successfully`);
       setOpenDialog(false);
       form.reset();
-      await Promise.all([fetchPending(), fetchHistory()]);
+      await refreshData();
     } catch (err) {
       toast.error("Failed to update indent");
       console.error(err);
@@ -596,7 +592,7 @@ export default function ApproveIndent() {
                         <td className="border-b px-2 py-1">{row.PURCHASER}</td>
                         <td className="border-b px-2 py-1">{row.PO_NO}</td>
                         <td className="border-b px-2 py-1">{row.GRN_NO}</td>
-                        <td className="border-b px-2 py-1">{row.GRN_DATE}</td>
+                        <td className="border-b px-2 py-1">{formatDate(row.GRN_DATE)}</td>
                       </tr>
                     ))
                   )}

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useStoreDashboard } from "../../context/StoreDashboardContext";
 import { ListTodo, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import { PuffLoader as Loader } from "react-spinners";
@@ -96,25 +97,26 @@ function PaginationBar({
   );
 }
 
-const formatDate = (dateString?: string) => {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+const formatDate = (date: any) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
-const formatDateTime = (dateString?: string) => {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+const formatDateTime = (date: any) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const mins = String(d.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${mins}`;
 };
 
 const INDENT_FIELD_KEYS = [
@@ -210,8 +212,12 @@ const normalize = (po: Partial<POData> | Record<string, unknown>, index = 0): PO
 };
 
 export default function PendingIndents() {
-  const [pendingAll, setPendingAll] = useState<POData[]>([]);
-  const [historyAll, setHistoryAll] = useState<POData[]>([]);
+  const {
+    poPending: rawPending,
+    poHistory: rawHistory,
+    isLoading: contextLoading,
+  } = useStoreDashboard();
+
   const [pendingSearch, setPendingSearch] = useState("");
   const [historySearch, setHistorySearch] = useState("");
   const [pendingPage, setPendingPage] = useState(1);
@@ -220,97 +226,23 @@ export default function PendingIndents() {
   const [downloadingPending, setDownloadingPending] = useState(false);
   const [downloadingHistory, setDownloadingHistory] = useState(false);
 
-  const fetchPendingAll = async () => {
-    try {
-      const res = await storeApi.getPoPending();
-      // console.log("✅ Pending API Full Response:", JSON.stringify(res, null, 2));
+  // Map and Normalize data in useMemo
+  const pendingAll = useMemo(() =>
+    (rawPending as any[]).map((row, idx) => normalize(row, idx)),
+    [rawPending]);
 
-      // Handle response structure: { success: true, total: number, data: [...] }
-      let rows: unknown[] = [];
-      if (res && typeof res === 'object') {
-        const resObj = res as Record<string, unknown>;
-        if ('data' in resObj && Array.isArray(resObj.data)) {
-          rows = resObj.data;
-        } else if (Array.isArray(res)) {
-          rows = res;
-        }
-      }
+  const historyAll = useMemo(() =>
+    (rawHistory as any[]).map((row, idx) => normalize(row, idx)),
+    [rawHistory]);
 
-      // console.log("✅ Pending Rows count:", rows.length);
-      // if (rows.length > 0) {
-      //   const firstRow = rows[0] as Record<string, unknown>;
-      //   console.log("✅ First row raw:", firstRow);
-      //   console.log("✅ First row keys:", Object.keys(firstRow));
-      //   console.log("✅ First row INDENT_NO:", firstRow.INDENT_NO, typeof firstRow.INDENT_NO);
-      //   console.log("✅ First row INDENTER:", firstRow.INDENTER, typeof firstRow.INDENTER);
-      // }
-
-      const normalized = rows.map((row, idx) => normalize(row, idx));
-      // console.log("✅ Normalized Pending Data (first 3):", normalized.slice(0, 3));
-      if (normalized.length > 0) {
-        // console.log("✅ First normalized INDENT_NO:", normalized[0]?.INDENT_NO);
-      }
-
-      setPendingAll(normalized);
-      setPendingPage(1);
-    } catch (error) {
-      console.error("❌ Error fetching pending POs:", error);
-      throw error;
-    }
-  };
-
-  const fetchHistoryAll = async () => {
-    try {
-      const res = await storeApi.getPoHistory();
-      // console.log("✅ History API Full Response:", JSON.stringify(res, null, 2));
-
-      // Handle response structure: { success: true, total: number, data: [...] }
-      let rows: unknown[] = [];
-      if (res && typeof res === 'object') {
-        const resObj = res as Record<string, unknown>;
-        if ('data' in resObj && Array.isArray(resObj.data)) {
-          rows = resObj.data;
-        } else if (Array.isArray(res)) {
-          rows = res;
-        }
-      }
-
-      // console.log("✅ History Rows count:", rows.length);
-      if (rows.length > 0) {
-        const firstRow = rows[0] as Record<string, unknown>;
-        // console.log("✅ First row raw:", firstRow);
-        // console.log("✅ First row keys:", Object.keys(firstRow));
-        // console.log("✅ First row INDENT_NO:", firstRow.INDENT_NO, typeof firstRow.INDENT_NO);
-        // console.log("✅ First row INDENTER:", firstRow.INDENTER, typeof firstRow.INDENTER);
-      }
-
-      const normalized = rows.map((row, idx) => normalize(row, idx));
-      // console.log("✅ Normalized History Data (first 3):", normalized.slice(0, 3));
-      if (normalized.length > 0) {
-        // console.log("✅ First normalized INDENT_NO:", normalized[0]?.INDENT_NO);
-      }
-
-      setHistoryAll(normalized);
-      setHistoryPage(1);
-    } catch (error) {
-      console.error("❌ Error fetching history POs:", error);
-      throw error;
-    }
-  };
-
-
-
-  const fetchInitial = async () => {
-    try {
+  // Sync loading state
+  useEffect(() => {
+    if (contextLoading && pendingAll.length === 0 && historyAll.length === 0) {
       setLoading(true);
-      await Promise.all([fetchPendingAll(), fetchHistoryAll()]);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch purchase orders");
-    } finally {
+    } else {
       setLoading(false);
     }
-  };
+  }, [contextLoading, pendingAll.length, historyAll.length]);
 
   const handleDownload = async (type: "pending" | "history") => {
     const setLoadingState =
@@ -343,36 +275,43 @@ export default function PendingIndents() {
     }
   };
 
-  useEffect(() => {
-    fetchInitial();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const pendingFiltered = useMemo(() => {
+    const q = pendingSearch.trim().toLowerCase();
+    if (!q) return pendingAll;
+    return pendingAll.filter((row) => 
+      Object.entries(row).some(([key, val]) => {
+        if (val == null) return false;
+        const strVal = val.toString().toLowerCase();
+        if (strVal.includes(q)) return true;
 
-  const pendingQuery = pendingSearch.trim().toLowerCase();
-  const pendingFiltered = pendingQuery
-    ? pendingAll.filter((row) => {
-      const q = pendingQuery;
-      return (
-        (row.VRNO || "").toLowerCase().includes(q) ||
-        (row.INDENT_NO || "").toLowerCase().includes(q) ||
-        (row.VENDOR_NAME || "").toLowerCase().includes(q) ||
-        (row.ITEM_NAME || "").toLowerCase().includes(q)
-      );
-    })
-    : pendingAll;
+        const k = key.toLowerCase();
+        if (k.includes('date') || k.includes('timestamp')) {
+          const formatted = formatDate(val);
+          if (formatted && formatted.toLowerCase().includes(q)) return true;
+        }
+        return false;
+      })
+    );
+  }, [pendingAll, pendingSearch]);
 
-  const historyQuery = historySearch.trim().toLowerCase();
-  const historyFiltered = historyQuery
-    ? historyAll.filter((row) => {
-      const q = historyQuery;
-      return (
-        (row.VRNO || "").toLowerCase().includes(q) ||
-        (row.INDENT_NO || "").toLowerCase().includes(q) ||
-        (row.VENDOR_NAME || "").toLowerCase().includes(q) ||
-        (row.ITEM_NAME || "").toLowerCase().includes(q)
-      );
-    })
-    : historyAll;
+  const historyFiltered = useMemo(() => {
+    const q = historySearch.trim().toLowerCase();
+    if (!q) return historyAll;
+    return historyAll.filter((row) => 
+      Object.entries(row).some(([key, val]) => {
+        if (val == null) return false;
+        const strVal = val.toString().toLowerCase();
+        if (strVal.includes(q)) return true;
+
+        const k = key.toLowerCase();
+        if (k.includes('date') || k.includes('timestamp')) {
+          const formatted = formatDate(val);
+          if (formatted && formatted.toLowerCase().includes(q)) return true;
+        }
+        return false;
+      })
+    );
+  }, [historyAll, historySearch]);
 
   const pendingTotal = pendingFiltered.length;
   const pendingTotalPages = Math.max(1, Math.ceil(pendingTotal / PAGE_SIZE) || 1);

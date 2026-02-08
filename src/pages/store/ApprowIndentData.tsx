@@ -111,8 +111,8 @@ export default function ApprowIndentData() {
         const raw = Array.isArray((res as any)?.data)
           ? (res as any).data
           : Array.isArray(res)
-          ? (res as any)
-          : [];
+            ? (res as any)
+            : [];
         const mapped = raw.map((rec: Record<string, unknown>) =>
           mapApiRowToIndent(rec)
         );
@@ -165,8 +165,8 @@ export default function ApprowIndentData() {
     const list = Array.isArray(payload)
       ? payload
       : payload
-      ? [payload]
-      : [];
+        ? [payload]
+        : [];
     return list.map((rec: Record<string, unknown>) => mapApiRowToIndent(rec));
   }, []);
 
@@ -305,7 +305,7 @@ export default function ApprowIndentData() {
   return (
     <div className="w-full p-4 md:p-6 lg:p-8">
       <Heading
-        heading="Approve Indent Data"
+        heading="Approve Indent HOD"
         subtext="View Indent sheet and select a row to fill inputs"
       >
         <ClipboardCheck size={50} className="text-primary" />

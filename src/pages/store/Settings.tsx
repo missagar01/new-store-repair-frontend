@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { settingsApi } from "../../services/settingsApi";
+import { ManageDepartmentsModal } from "./ManageDepartmentsModal";
+import { Settings as SettingsIcon } from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -32,7 +34,8 @@ const STORE_ACCESS_OPTIONS = [
     "GRN & PO",
     "Store Out Approval",
     "Completed Items",
-    "Approve Indent Data",
+    "Approve Indent HOD",
+    "Approve Indent GM",
     "Returnable",
 ];
 
@@ -44,6 +47,7 @@ export default function Settings() {
     const [search, setSearch] = useState("");
 
     const [showPopup, setShowPopup] = useState(false);
+    const [showDeptPopup, setShowDeptPopup] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
     const [storeAccessList, setStoreAccessList] = useState<string[]>([]);
     const [processing, setProcessing] = useState(false);
@@ -165,7 +169,13 @@ export default function Settings() {
             </Heading>
 
             {/* SEARCH */}
-            <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <Button
+                    onClick={() => setShowDeptPopup(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                >
+                    <SettingsIcon size={18} /> Manage Departments
+                </Button>
                 <Input
                     className="w-full max-w-md"
                     placeholder="Search Employee ID / User Name"
@@ -249,7 +259,7 @@ export default function Settings() {
 
             {/* POPUP */}
             {showPopup && selectedUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
                     <div className="bg-white rounded-lg w-full max-w-md p-5 shadow-lg">
                         <h3 className="text-lg font-semibold mb-3">Edit Store Access</h3>
 
@@ -306,6 +316,11 @@ export default function Settings() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* DEPARTMENTS POPUP */}
+            {showDeptPopup && (
+                <ManageDepartmentsModal onClose={() => setShowDeptPopup(false)} />
             )}
         </div>
     );

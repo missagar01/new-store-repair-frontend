@@ -5,11 +5,13 @@ import UserProfiles from "./pages/UserProfiles";
 import Login from "./components/auth/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
+import { StoreDashboardProvider } from "./context/StoreDashboardContext";
 import PendingPOs from "./pages/store/PendingPOs";
 import IndentAll from "./pages/store/IndentAll";
 import Administration from "./pages/store/Administration";
 import StoreOutApproval from "./pages/store/StoreOutApproval";
 import ApproveIndent from "./pages/store/ApproveIndent";
+import ApproveIndentGM from "./pages/store/ApproveIndentGM";
 import ApprowIndentData from "./pages/store/ApprowIndentData";
 import CompletedItems from "./pages/store/CompletedItems";
 import CreatePO from "./pages/store/CreatePO";
@@ -57,7 +59,9 @@ function AppRoutes() {
       <Route
         element={
           <ProtectedRoute>
-            <AppLayout />
+            <StoreDashboardProvider>
+              <AppLayout />
+            </StoreDashboardProvider>
           </ProtectedRoute>
         }
       >
@@ -78,6 +82,10 @@ function AppRoutes() {
         <Route
           path="/store/approve-indent-data"
           element={<ApprowIndentData />}
+        />
+        <Route
+          path="/store/approve-indent-gm"
+          element={<ApproveIndentGM />}
         />
         <Route path="/store/completed-items" element={<CompletedItems />} />
         <Route path="/store/inventory" element={<Inventory />} />

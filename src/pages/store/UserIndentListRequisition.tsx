@@ -27,6 +27,7 @@ type IndentRow = {
   purpose?: string;
   costLocation?: string;
   requestStatus?: string;
+  gmApproval?: string;
   planned_1?: string;
   actual_1?: string;
   time_delay_1?: string;
@@ -56,8 +57,8 @@ export default function UserIndentListRequisition() {
         const list = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
-          ? res
-          : [];
+            ? res
+            : [];
 
         const mapped = list
           .map((r: any) => ({
@@ -82,6 +83,7 @@ export default function UserIndentListRequisition() {
             actual_1: r.actual_1 ?? "",
             time_delay_1: r.time_delay_1 ?? "",
             requestStatus: r.request_status ?? "",
+            gmApproval: r.gm_approval ?? "",
             approved_quantity: r.approved_quantity ?? "",
             updated_at: r.updated_at ?? "",
             category_name: r.category_name ?? "",
@@ -215,7 +217,7 @@ export default function UserIndentListRequisition() {
     { accessorKey: "costLocation", header: "Cost Location" },
     {
       accessorKey: "requestStatus",
-      header: "Status",
+      header: "HOD Status",
       cell: ({ row }) => {
         const status = row.original.requestStatus?.toUpperCase();
         if (status === "APPROVED") {
@@ -230,6 +232,31 @@ export default function UserIndentListRequisition() {
         return (
           <span className="text-gray-500">{row.original.requestStatus}</span>
         );
+      },
+    },
+    {
+      accessorKey: "gmApproval",
+      header: "GM Status",
+      cell: ({ row }) => {
+        const hodStatus = row.original.requestStatus?.toUpperCase();
+        const gmStatus = row.original.gmApproval?.toUpperCase();
+
+        if (gmStatus === "APPROVED") {
+          return <span className="font-medium text-green-600">APPROVED</span>;
+        }
+        if (gmStatus === "REJECTED") {
+          return <span className="font-medium text-red-600">REJECTED</span>;
+        }
+
+        if (hodStatus === "REJECTED") {
+          return <span className="text-gray-400">—</span>;
+        }
+
+        if (hodStatus === "PENDING" || !hodStatus) {
+          return <span className="text-gray-400 italic">Pending HOD</span>;
+        }
+
+        return <span className="font-medium text-blue-600">PENDING GM</span>;
       },
     },
   ];

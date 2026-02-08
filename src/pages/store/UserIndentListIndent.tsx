@@ -26,6 +26,7 @@ type IndentRow = {
   purpose?: string;
   costLocation?: string;
   requestStatus?: string;
+  gmApproval?: string;
 };
 
 const formatIndianDateTime = (isoString: string | null | undefined) => {
@@ -91,6 +92,7 @@ export default function UserIndentListIndent() {
             purpose: r.purpose ?? "",
             costLocation: r.cost_location ?? r.costLocation ?? "",
             requestStatus: r.request_status ?? "",
+            gmApproval: r.gm_approval ?? "",
           }))
           .filter(
             (row: IndentRow) => (row.formType || "").toUpperCase() === "INDENT" && Boolean(row.indentNumber?.trim())
@@ -214,7 +216,7 @@ export default function UserIndentListIndent() {
     { accessorKey: "costLocation", header: "Cost Location" },
     {
       accessorKey: "requestStatus",
-      header: "Status",
+      header: "HOD Status",
       cell: ({ row }) => {
         const status = row.original.requestStatus?.toUpperCase();
         if (status === "APPROVED") {
@@ -229,6 +231,31 @@ export default function UserIndentListIndent() {
         return (
           <span className="text-gray-500">{row.original.requestStatus}</span>
         );
+      },
+    },
+    {
+      accessorKey: "gmApproval",
+      header: "GM Status",
+      cell: ({ row }) => {
+        const hodStatus = row.original.requestStatus?.toUpperCase();
+        const gmStatus = row.original.gmApproval?.toUpperCase();
+
+        if (gmStatus === "APPROVED") {
+          return <span className="font-medium text-green-600">APPROVED</span>;
+        }
+        if (gmStatus === "REJECTED") {
+          return <span className="font-medium text-red-600">REJECTED</span>;
+        }
+
+        if (hodStatus === "REJECTED") {
+          return <span className="text-gray-400">—</span>;
+        }
+
+        if (hodStatus === "PENDING" || !hodStatus) {
+          return <span className="text-gray-400 italic">Pending HOD</span>;
+        }
+
+        return <span className="font-medium text-blue-600">PENDING GM</span>;
       },
     },
   ];

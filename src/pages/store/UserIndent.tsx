@@ -24,6 +24,7 @@ type StoreItem = {
   groupname?: string;
   item_code?: string;
   itemname?: string;
+  uom?: string;
 };
 
 type IndentItem = {
@@ -36,6 +37,7 @@ type IndentItem = {
   specification: string;
   purpose: string;
   costLocation: string;
+  stock?: string;
 };
 
 type IndentForm = {
@@ -45,6 +47,7 @@ type IndentForm = {
   requesterName: string;
   username: string;
   division: string;
+  hod: string;
   items: IndentItem[];
 };
 
@@ -70,6 +73,8 @@ export default function UserIndent() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingCostLocations, setLoadingCostLocations] = useState(false);
   const [previousDivision, setPreviousDivision] = useState("");
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [loadingStock, setLoadingStock] = useState(false);
 
   const form = useForm<IndentForm>({
     defaultValues: {
@@ -79,6 +84,7 @@ export default function UserIndent() {
       requesterName: "",
       username: "",
       division: "",
+      hod: "",
       items: [
         {
           category: "",
@@ -90,6 +96,7 @@ export default function UserIndent() {
           specification: "",
           purpose: "",
           costLocation: "",
+          stock: "0",
         },
       ],
     },
@@ -105,6 +112,7 @@ export default function UserIndent() {
   const formType = watch("formType");
   const indentSeries = watch("indentSeries");
   const division = watch("division");
+  const department = watch("department");
 
   const uomOptions = useMemo(
     () => uomList.map((value) => ({ label: value, value })),
@@ -194,10 +202,33 @@ export default function UserIndent() {
   }, [setValue, authUser]);
 
   useEffect(() => {
+    if (!department) {
+      setValue("hod", "");
+      return;
+    }
+
+    let active = true;
+    const fetchHOD = async () => {
+      try {
+        const res: any = await storeApi.getHOD(department);
+        if (active && res?.success && res.data) {
+          setValue("hod", res.data.hod || "");
+        }
+      } catch (err) {
+        console.warn("Failed to fetch HOD for department:", department, err);
+        if (active) setValue("hod", "");
+      }
+    };
+
+    fetchHOD();
+    return () => { active = false; };
+  }, [department, setValue]);
+
+  useEffect(() => {
     const fetchItems = async () => {
       try {
         setLoadingProducts(true);
-        const res = await storeApi.getItems();
+        const res = (await storeApi.getItems()) as any;
         const rawItems = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
@@ -214,6 +245,9 @@ export default function UserIndent() {
             ).trim(),
             itemname: String(
               item.itemname || item.item_name || item.ITEM_NAME || ""
+            ).trim(),
+            uom: String(
+              item.uom || item.UOM || item.COL3 || ""
             ).trim(),
           }))
           .filter((item) => item.item_code && item.itemname);
@@ -233,6 +267,38 @@ export default function UserIndent() {
     };
 
     fetchItems();
+  }, []);
+
+  useEffect(() => {
+    const fetchTodayStock = async () => {
+      try {
+        setLoadingStock(true);
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        const todayStr = `${dd}-${mm}-${yyyy}`;
+
+        const res: any = await storeApi.getStock(todayStr, todayStr);
+        let dataArray: any[] = [];
+        if (Array.isArray(res)) dataArray = res;
+        else if (res?.data && Array.isArray(res.data)) dataArray = res.data;
+        else if (res?.data?.data && Array.isArray(res.data.data)) dataArray = res.data.data;
+
+        const mapping: Record<string, number> = {};
+        dataArray.forEach((r: any) => {
+          const code = String(r.COL1 ?? r.itemCode ?? "").trim();
+          const stock = Number(r.COL5 ?? r.closingQty ?? 0);
+          if (code) mapping[code] = stock;
+        });
+        setStockMap(mapping);
+      } catch (err) {
+        console.warn("Failed to fetch stock data", err);
+      } finally {
+        setLoadingStock(false);
+      }
+    };
+    fetchTodayStock();
   }, []);
 
   useEffect(() => {
@@ -352,9 +418,17 @@ export default function UserIndent() {
       (item) => item.item_code === selectedItemCode
     );
 
+    const itemCode = selectedItem?.item_code || "";
     setValue(`items.${index}.productName`, selectedItem?.itemname || "");
-    setValue(`items.${index}.itemCode`, selectedItem?.item_code || "");
+    setValue(`items.${index}.itemCode`, itemCode);
     setValue(`items.${index}.category`, selectedItem?.groupname || "");
+    if ((selectedItem as any)?.uom) {
+      setValue(`items.${index}.uom`, (selectedItem as any).uom);
+    }
+
+    // Auto-fill stock
+    const stockVal = stockMap[itemCode] ?? 0;
+    setValue(`items.${index}.stock`, String(stockVal));
   };
 
   const generateRequestNumber = async (
@@ -460,6 +534,7 @@ export default function UserIndent() {
             specification: "",
             purpose: "",
             costLocation: "",
+            stock: "0",
           },
         ],
       }));
@@ -533,6 +608,7 @@ export default function UserIndent() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={control}
                 name="department"
@@ -544,6 +620,25 @@ export default function UserIndent() {
                         {...field}
                         readOnly
                         className="bg-gray-100"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* HOD (Auto) */}
+              <FormField
+                control={control}
+                name="hod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Head of Department (HOD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        className="bg-gray-100 cursor-not-allowed"
+                        placeholder="Auto from department"
                       />
                     </FormControl>
                   </FormItem>
@@ -775,6 +870,32 @@ export default function UserIndent() {
                           <FormLabel>Make / Brand</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Enter Brand" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Stock Display */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.stock`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current Stock (Closing Qty)</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                {...field}
+                                readOnly
+                                className={`bg-gray-100 font-semibold ${Number(field.value) === 0 ? "text-red-600" : "text-green-600"
+                                  }`}
+                              />
+                              {loadingStock && (
+                                <div className="absolute right-3 top-2.5">
+                                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                                </div>
+                              )}
+                            </div>
                           </FormControl>
                         </FormItem>
                       )}

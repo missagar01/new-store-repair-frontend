@@ -1,6 +1,7 @@
 // Store Dashboard - Modern UI Version with Modal Integration and Status Tracking
 import { useEffect, useState, useMemo } from "react";
 import { storeApi } from "../../services";
+import { useStoreDashboard } from "../../context/StoreDashboardContext";
 import {
   ClipboardList, LayoutDashboard, PackageCheck, Truck,
   Warehouse, FileText, TrendingUp, BarChart3, Activity,
@@ -55,17 +56,26 @@ type ReturnableStats = {
 };
 
 export default function StoreDashboard() {
-  const [dashboardData, setDashboardData] = useState<DashboardApiResponse['data'] | null>(null);
-  const [repairGatePassCounts, setRepairGatePassCounts] = useState<{ pending: number; history: number }>({ pending: 0, history: 0 });
-  const [returnableStats, setReturnableStats] = useState<ReturnableStats['data']>({
-    TOTAL_COUNT: 0,
-    RETURNABLE_COUNT: 0,
-    NON_RETURNABLE_COUNT: 0,
-    RETURNABLE_COMPLETED_COUNT: 0,
-    RETURNABLE_PENDING_COUNT: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const {
+    pendingIndents,
+    historyIndents,
+    poPending,
+    poHistory,
+    repairPending,
+    repairHistory,
+    repairReceived,
+    returnableDetails,
+    dashboardSummary,
+    isLoading: loading,
+    error: apiError,
+  } = useStoreDashboard();
+
   const [error, setError] = useState<string | null>(null);
+
+  // Sync context error to local error if needed
+  useEffect(() => {
+    if (apiError) setError(apiError);
+  }, [apiError]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,6 +88,18 @@ export default function StoreDashboard() {
   const MODAL_PAGE_SIZE = 50;
 
   // Helper for current month filtering
+  // Helpers for date formatting
+  const formatDate = (date: any) => {
+    if (!date) return "—";
+    try {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return "—";
+      return d.toLocaleDateString("en-GB", { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (e) {
+      return "—";
+    }
+  };
+
   const getCurrentMonthStart = () => {
     const d = new Date();
     d.setDate(1);
@@ -85,87 +107,46 @@ export default function StoreDashboard() {
     return d;
   };
 
-  useEffect(() => {
-    let active = true;
-    const loadDashboard = async () => {
-      setLoading(true);
-      try {
-        const monthStart = getCurrentMonthStart();
+  const dashboardStats = useMemo(() => {
+    const monthStart = getCurrentMonthStart();
+    const filterMonth = (rows: any[]) =>
+      (rows || []).filter(item => {
+        const dateVal = item.VRDATE || item.vrdate || item.INDENT_DATE || item.indent_date || item.RECEIVED_DATE || item.received_date || item.PLANNEDTIMESTAMP;
+        return dateVal && new Date(dateVal) >= monthStart;
+      });
 
-        // Fetch all raw data for client-side counting to ensure "Current Month" accuracy
-        const [
-          pendingIndentsRaw,
-          historyIndentsRaw,
-          poPendingRaw,
-          poHistoryRaw,
-          repairPendingRaw,
-          repairHistoryRaw,
-          returnableRaw,
-          dashboardSummary // Keep for top items/progress if needed
-        ] = await Promise.all([
-          storeApi.getPendingIndents(),
-          storeApi.getHistoryIndents(),
-          storeApi.getPoPending(),
-          storeApi.getPoHistory(),
-          storeApi.getRepairGatePassPending(),
-          storeApi.getRepairGatePassHistory(),
-          storeApi.getReturnableDetails(),
-          storeApi.getStoreIndentDashboard()
-        ]);
+    const curMonthPendingIndents = filterMonth(pendingIndents);
+    const curMonthHistoryIndents = filterMonth(historyIndents);
+    const curMonthPoPending = filterMonth(poPending);
+    const curMonthPoHistory = filterMonth(poHistory);
+    const curMonthRepairPending = filterMonth(repairPending);
+    const curMonthRepairHistory = filterMonth(repairHistory);
 
-        if (!active) return;
+    const curMonthReturnable = (returnableDetails || []).filter((item: any) => new Date(item.VRDATE || item.vrdate) >= monthStart);
 
-        const filterMonth = (rows: any[]) =>
-          (rows || []).filter(item => {
-            // Check multiple possible date fields
-            const dateVal = item.VRDATE || item.vrdate || item.INDENT_DATE || item.indent_date || item.RECEIVED_DATE || item.received_date || item.PLANNEDTIMESTAMP;
-            return dateVal && new Date(dateVal) >= monthStart;
-          });
-
-        // Calculate counts
-        const curMonthPendingIndents = filterMonth((pendingIndentsRaw as any).data);
-        const curMonthHistoryIndents = filterMonth((historyIndentsRaw as any).data);
-        const curMonthPoPending = filterMonth((poPendingRaw as any).data);
-        const curMonthPoHistory = filterMonth((poHistoryRaw as any).data);
-        const curMonthRepairPending = filterMonth((repairPendingRaw as any).data);
-        const curMonthRepairHistory = filterMonth((repairHistoryRaw as any).data);
-
-        const returnableRows = (returnableRaw as any).data || [];
-        const curMonthReturnable = returnableRows.filter((item: any) => new Date(item.VRDATE || item.vrdate) >= monthStart);
-
-        setDashboardData({
-          ...(dashboardSummary as any).data,
-          totalIndents: curMonthHistoryIndents.length,
-          pendingIndents: curMonthPendingIndents.length,
-          totalPurchaseOrders: curMonthPoHistory.length,
-          pendingPurchaseOrders: curMonthPoPending.length,
-        });
-
-        setRepairGatePassCounts({
-          pending: curMonthRepairPending.length,
-          history: curMonthRepairHistory.length
-        });
-
-        setReturnableStats({
-          TOTAL_COUNT: curMonthReturnable.length,
-          RETURNABLE_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE').length,
-          NON_RETURNABLE_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'NON RETURANABLE').length,
-          RETURNABLE_COMPLETED_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'COMPLETED').length,
-          RETURNABLE_PENDING_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'PENDING').length,
-        });
-
-        setError(null);
-      } catch (err: unknown) {
-        console.error('Failed to load dashboard', err);
-        if (active) setError('Unable to fetch dashboard data right now.');
-      } finally {
-        if (active) setLoading(false);
+    return {
+      dashboardData: {
+        ...(dashboardSummary || {}),
+        totalIndents: curMonthHistoryIndents.length,
+        pendingIndents: curMonthPendingIndents.length,
+        totalPurchaseOrders: curMonthPoHistory.length,
+        pendingPurchaseOrders: curMonthPoPending.length,
+      },
+      repairGatePassCounts: {
+        pending: curMonthRepairPending.length,
+        history: curMonthRepairHistory.length
+      },
+      returnableStats: {
+        TOTAL_COUNT: curMonthReturnable.length,
+        RETURNABLE_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE').length,
+        NON_RETURNABLE_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'NON RETURANABLE').length,
+        RETURNABLE_COMPLETED_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'COMPLETED').length,
+        RETURNABLE_PENDING_COUNT: curMonthReturnable.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'PENDING').length,
       }
     };
+  }, [pendingIndents, historyIndents, poPending, poHistory, repairPending, repairHistory, returnableDetails, dashboardSummary]);
 
-    loadDashboard();
-    return () => { active = false; };
-  }, []);
+  const { dashboardData, repairGatePassCounts, returnableStats } = dashboardStats;
 
   const getModalConfig = (type: string) => {
     switch (type) {
@@ -175,7 +156,7 @@ export default function StoreDashboard() {
           renderRow: (item: any) => (
             <>
               <td className="px-6 py-4 font-mono font-bold text-indigo-600">{item.indent_no || item.INDENT_NO || item.INDENT_NUMBER || "—"}</td>
-              <td className="px-6 py-4 text-sm whitespace-nowrap">{item.indent_date || item.INDENT_DATE ? new Date(item.indent_date || item.INDENT_DATE).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm whitespace-nowrap">{formatDate(item.indent_date || item.INDENT_DATE)}</td>
               <td className="px-6 py-4 text-sm">{item.indenter || item.INDENTER || item.INDENTER_NAME || "—"}</td>
               <td className="px-6 py-4 text-sm">{item.division || item.DIVISION || "—"}</td>
               <td className="px-6 py-4 text-sm text-slate-500">{item.department || item.DEPARTMENT || "—"}</td>
@@ -183,7 +164,7 @@ export default function StoreDashboard() {
               <td className="px-6 py-4 text-sm font-semibold">{item.item_name || item.ITEM_NAME || "—"}</td>
               <td className="px-6 py-4 text-center text-sm font-bold">{item.qtyindent || item.QTYINDENT || item.REQUIRED_QTY || "—"}</td>
               <td className="px-6 py-4 text-center text-[10px] uppercase font-extrabold text-slate-400">{item.um || item.UM || "—"}</td>
-              <td className="px-6 py-4 text-sm">{item.acknowledgedate || item.ACKNOWLEDGEDATE ? new Date(item.acknowledgedate || item.ACKNOWLEDGEDATE).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm">{formatDate(item.acknowledgedate || item.ACKNOWLEDGEDATE)}</td>
               <td className="px-6 py-4 text-sm text-slate-500">{item.purchaser || item.PURCHASER || "—"}</td>
               <td className="px-6 py-4 text-indigo-600 font-bold">{item.po_no || item.PO_NO || "—"}</td>
               <td className="px-6 py-4 text-emerald-600 font-bold">{item.grn_no || item.GRN_NO || "—"}</td>
@@ -196,8 +177,8 @@ export default function StoreDashboard() {
           renderRow: (item: any) => (
             <>
               <td className="px-6 py-4 font-mono font-bold text-indigo-600">{item.INDENT_NUMBER || item.indent_number || "—"}</td>
-              <td className="px-6 py-4 text-sm">{item.PLANNEDTIMESTAMP ? new Date(item.PLANNEDTIMESTAMP).toLocaleDateString() : "—"}</td>
-              <td className="px-6 py-4 text-sm text-slate-500">{item.INDENT_DATE ? new Date(item.INDENT_DATE).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm">{formatDate(item.PLANNEDTIMESTAMP)}</td>
+              <td className="px-6 py-4 text-sm text-slate-500">{formatDate(item.INDENT_DATE)}</td>
               <td className="px-6 py-4 text-sm">{item.INDENTER_NAME || "—"}</td>
               <td className="px-6 py-4 text-sm">{item.DIVISION || "—"}</td>
               <td className="px-6 py-4 text-sm text-slate-500">{item.DEPARTMENT || "—"}</td>
@@ -218,8 +199,8 @@ export default function StoreDashboard() {
             <>
               <td className="px-6 py-4 font-mono font-bold text-slate-500">{item.INDENT_NO || "—"}</td>
               <td className="px-6 py-4 font-mono font-bold text-indigo-600">{item.VRNO || item.vrno || "—"}</td>
-              <td className="px-6 py-4 text-sm">{item.PLANNED_TIMESTAMP ? new Date(item.PLANNED_TIMESTAMP).toLocaleDateString() : "—"}</td>
-              <td className="px-6 py-4 text-sm text-slate-500">{item.VRDATE ? new Date(item.VRDATE).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm">{formatDate(item.PLANNED_TIMESTAMP)}</td>
+              <td className="px-6 py-4 text-sm text-slate-500">{formatDate(item.VRDATE)}</td>
               <td className="px-6 py-4 text-sm font-bold text-slate-800">{item.VENDOR_NAME || "—"}</td>
               <td className="px-6 py-4 text-sm text-slate-500 truncate">{item.INDENTER || "—"}</td>
               <td className="px-6 py-4 text-sm font-semibold">{item.ITEM_NAME || "—"}</td>
@@ -236,7 +217,7 @@ export default function StoreDashboard() {
           renderRow: (item: any) => (
             <>
               <td className="px-6 py-4 font-mono font-bold text-indigo-600">{item.vrno || item.VRNO || "—"}</td>
-              <td className="px-6 py-4 text-sm font-medium">{item.vrdate || item.VRDATE ? new Date(item.vrdate || item.VRDATE).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm font-medium">{formatDate(item.vrdate || item.VRDATE)}</td>
               <td className="px-6 py-4 text-sm font-bold">{item.partyname || item.PARTYNAME || "—"}</td>
               <td className="px-6 py-4 text-sm text-slate-500">{item.department || item.DEPARTMENT || "—"}</td>
               <td className="px-6 py-4 text-xs font-mono text-slate-500">{item.item_code || item.ITEM_CODE || "—"}</td>
@@ -254,7 +235,7 @@ export default function StoreDashboard() {
             <>
               <td className="px-6 py-4 font-mono font-bold text-slate-500">{item.repair_gate_pass || item.REPAIR_GATE_PASS || "—"}</td>
               <td className="px-6 py-4 font-mono font-bold text-indigo-600">{item.receive_gate_pass || item.RECEIVE_GATE_PASS || "—"}</td>
-              <td className="px-6 py-4 text-sm font-medium">{item.received_date || item.RECEIVED_DATE ? new Date(item.received_date || item.RECEIVED_DATE).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm font-medium">{formatDate(item.received_date || item.RECEIVED_DATE)}</td>
               <td className="px-6 py-4 text-sm font-bold">{item.partyname || item.PARTYNAME || "—"}</td>
               <td className="px-6 py-4 text-sm text-slate-500">{item.department || item.DEPARTMENT || "—"}</td>
               <td className="px-6 py-4 text-xs font-mono text-slate-500">{item.item_code || item.ITEM_CODE || "—"}</td>
@@ -270,7 +251,7 @@ export default function StoreDashboard() {
           headers: ["Date", "VR No", "Party Name", "Item Code", "Item Name", "Qty Issued", "Qty Received", "Unit", "Remarks"],
           renderRow: (item: any) => (
             <>
-              <td className="px-6 py-4 text-sm font-medium">{item.VRDATE || item.vrdate ? new Date(item.VRDATE || item.vrdate).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm font-medium">{formatDate(item.VRDATE || item.vrdate)}</td>
               <td className="px-6 py-4 font-mono font-bold text-indigo-600">{item.VRNO || item.vrno || "—"}</td>
               <td className="px-6 py-4 text-sm font-bold">{item.PARTY_NAME || item.party_name || "—"}</td>
               <td className="px-6 py-4 text-xs font-mono text-slate-500">{item.ITEM_CODE || item.item_code || "—"}</td>
@@ -287,7 +268,7 @@ export default function StoreDashboard() {
           headers: ["Date", "VR No", "Party Name", "Item Code", "Item Name", "Qty Issued", "Qty Received", "Unit", "Status", "Remarks"],
           renderRow: (item: any) => (
             <>
-              <td className="px-6 py-4 text-sm font-medium">{item.VRDATE || item.vrdate ? new Date(item.VRDATE || item.vrdate).toLocaleDateString() : "—"}</td>
+              <td className="px-6 py-4 text-sm font-medium">{formatDate(item.VRDATE || item.vrdate)}</td>
               <td className="px-6 py-4 font-mono font-bold text-indigo-600">{item.VRNO || item.vrno || "—"}</td>
               <td className="px-6 py-4 text-sm font-bold">{item.PARTY_NAME || item.party_name || "—"}</td>
               <td className="px-6 py-4 text-xs font-mono text-slate-500">{item.ITEM_CODE || item.item_code || "—"}</td>
@@ -318,67 +299,51 @@ export default function StoreDashboard() {
     setModalPage(1);
 
     try {
-      let res: any;
+      let rows: any[] = [];
       switch (type) {
-        case 'totalIndents': // Approve Indent History
-          res = await storeApi.getHistoryIndents();
+        case 'totalIndents':
+          rows = historyIndents;
           break;
-        case 'pendingIndents': // Approve Indent Pending
-          res = await storeApi.getPendingIndents();
+        case 'pendingIndents':
+          rows = pendingIndents;
           break;
-        case 'totalPurchases': // PO History
-          res = await storeApi.getPoHistory();
+        case 'totalPurchases':
+          rows = poHistory;
           break;
-        case 'pendingPOs': // PO Pending
-          res = await storeApi.getPoPending();
+        case 'pendingPOs':
+          rows = poPending;
           break;
-        case 'repairPending': // Pending repairs
-          res = await storeApi.getRepairGatePassPending();
+        case 'repairPending':
+          rows = repairPending;
           break;
-        case 'repairHistory': // Received/History repairs
-          res = await storeApi.getRepairGatePassReceived();
+        case 'repairHistory':
+          rows = repairReceived; // Use repairReceived for history tab
           break;
         case 'returnableTotal':
-          res = (await storeApi.getReturnableDetails()) as { success: boolean, data: any[] };
-          if (res.success && res.data) {
-            res.data = res.data.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE');
-          }
+          rows = (returnableDetails || []).filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE');
           break;
         case 'returnablePending':
-          res = (await storeApi.getReturnableDetails()) as { success: boolean, data: any[] };
-          if (res.success && res.data) {
-            res.data = res.data.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'PENDING');
-          }
+          rows = (returnableDetails || []).filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'PENDING');
           break;
         case 'returnableCompleted':
-          res = (await storeApi.getReturnableDetails()) as { success: boolean, data: any[] };
-          if (res.success && res.data) {
-            res.data = res.data.filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'COMPLETED');
-          }
+          rows = (returnableDetails || []).filter((i: any) => i.GATEPASS_TYPE === 'RETURNABLE' && i.GATEPASS_STATUS === 'COMPLETED');
           break;
         case 'nonReturnable':
-          res = (await storeApi.getReturnableDetails()) as { success: boolean, data: any[] };
-          if (res.success && res.data) {
-            res.data = res.data.filter((i: any) => i.GATEPASS_TYPE === 'NON RETURANABLE');
-          }
+          rows = (returnableDetails || []).filter((i: any) => i.GATEPASS_TYPE === 'NON RETURANABLE');
           break;
-        default:
-          res = { success: true, data: [] };
       }
-
-      const rows = res.data || (Array.isArray(res) ? res : []);
 
       // Filter by current month start
       const monthStart = getCurrentMonthStart();
       const filteredByMonth = rows.filter((item: any) => {
-        const dateVal = item.VRDATE || item.vrdate || item.INDENT_DATE || item.indent_date || item.RECEIVED_DATE || item.received_date || item.date;
+        const dateVal = item.VRDATE || item.vrdate || item.INDENT_DATE || item.indent_date || item.RECEIVED_DATE || item.received_date || item.date || item.PLANNEDTIMESTAMP;
         if (!dateVal) return true; // Keep if no date found
         return new Date(dateVal) >= monthStart;
       });
 
       setModalData(filteredByMonth);
     } catch (err) {
-      console.error(`Failed to fetch ${type} details:`, err);
+      console.error(`Failed to filter ${type} details:`, err);
     } finally {
       setModalLoading(false);
     }
@@ -390,7 +355,7 @@ export default function StoreDashboard() {
       icon: <ClipboardList size={22} />,
       value: dashboardData?.totalIndents ?? '—',
       sublabel: 'Indented Quantity',
-      subvalue: dashboardData ? dashboardData.totalIndentedQuantity.toLocaleString() : '—',
+      subvalue: dashboardData?.totalIndentedQuantity?.toLocaleString() ?? '—',
       bgGradient: 'from-red-500 to-red-600',
       shadowColor: 'shadow-red-200 dark:shadow-red-900/20',
       iconBg: 'bg-white/20',
@@ -412,7 +377,7 @@ export default function StoreDashboard() {
       icon: <Truck size={22} />,
       value: dashboardData?.totalPurchaseOrders ?? '—',
       sublabel: 'Purchased Quantity',
-      subvalue: dashboardData ? dashboardData.totalPurchasedQuantity.toLocaleString() : '—',
+      subvalue: dashboardData?.totalPurchasedQuantity?.toLocaleString() ?? '—',
       bgGradient: 'from-emerald-600 to-teal-700',
       shadowColor: 'shadow-emerald-200 dark:shadow-emerald-900/20',
       iconBg: 'bg-white/20',
@@ -434,7 +399,7 @@ export default function StoreDashboard() {
       icon: <Activity size={22} />,
       value: repairGatePassCounts.pending ?? '—',
       sublabel: 'Gate Pass Pending',
-      subvalue: repairGatePassCounts.pending.toLocaleString() ?? '—',
+      subvalue: repairGatePassCounts.pending?.toLocaleString() ?? '—',
       bgGradient: 'from-violet-500 to-purple-600',
       shadowColor: 'shadow-purple-200 dark:shadow-purple-900/20',
       iconBg: 'bg-white/20',
@@ -445,7 +410,7 @@ export default function StoreDashboard() {
       icon: <FileText size={22} />,
       value: repairGatePassCounts.history ?? '—',
       sublabel: 'Gate Pass Received',
-      subvalue: repairGatePassCounts.history.toLocaleString() ?? '—',
+      subvalue: repairGatePassCounts.history?.toLocaleString() ?? '—',
       bgGradient: 'from-violet-400 to-purple-500',
       shadowColor: 'shadow-purple-200 dark:shadow-purple-900/20',
       iconBg: 'bg-white/20',
@@ -456,7 +421,7 @@ export default function StoreDashboard() {
       icon: <RefreshCcw size={22} />,
       value: returnableStats.RETURNABLE_COUNT ?? '—',
       sublabel: 'Total GP R3',
-      subvalue: returnableStats.RETURNABLE_COUNT.toLocaleString() ?? '—',
+      subvalue: returnableStats.RETURNABLE_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-indigo-600 to-blue-700',
       shadowColor: 'shadow-indigo-200 dark:shadow-indigo-900/20',
       iconBg: 'bg-white/20',
@@ -467,7 +432,7 @@ export default function StoreDashboard() {
       icon: <Box size={22} />,
       value: returnableStats.NON_RETURNABLE_COUNT ?? '—',
       sublabel: 'Gate Pass N3',
-      subvalue: returnableStats.NON_RETURNABLE_COUNT.toLocaleString() ?? '—',
+      subvalue: returnableStats.NON_RETURNABLE_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-indigo-500 to-blue-600',
       shadowColor: 'shadow-indigo-200 dark:shadow-indigo-900/20',
       iconBg: 'bg-white/20',
@@ -478,7 +443,7 @@ export default function StoreDashboard() {
       icon: <Clock size={22} />,
       value: returnableStats.RETURNABLE_PENDING_COUNT ?? '—',
       sublabel: 'GP Pending R3',
-      subvalue: returnableStats.RETURNABLE_PENDING_COUNT.toLocaleString() ?? '—',
+      subvalue: returnableStats.RETURNABLE_PENDING_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-amber-500 to-orange-600',
       shadowColor: 'shadow-orange-200 dark:shadow-orange-900/20',
       iconBg: 'bg-white/20',
@@ -489,7 +454,7 @@ export default function StoreDashboard() {
       icon: <CheckCircle2 size={22} />,
       value: returnableStats.RETURNABLE_COMPLETED_COUNT ?? '—',
       sublabel: 'GP Completed R3',
-      subvalue: returnableStats.RETURNABLE_COMPLETED_COUNT.toLocaleString() ?? '—',
+      subvalue: returnableStats.RETURNABLE_COMPLETED_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-amber-400 to-orange-500',
       shadowColor: 'shadow-orange-200 dark:shadow-orange-900/20',
       iconBg: 'bg-white/20',
@@ -503,20 +468,19 @@ export default function StoreDashboard() {
     if (modalSearch) {
       const lowerSearch = modalSearch.toLowerCase();
       data = modalData.filter((item: any) => {
-        return (
-          item.ITEM_NAME?.toLowerCase().includes(lowerSearch) ||
-          item.item_name?.toLowerCase().includes(lowerSearch) ||
-          item.ITEM_CODE?.toLowerCase().includes(lowerSearch) ||
-          item.item_code?.toLowerCase().includes(lowerSearch) ||
-          item.PARTY_NAME?.toLowerCase().includes(lowerSearch) ||
-          item.party_name?.toLowerCase().includes(lowerSearch) ||
-          item.VRNO?.toLowerCase().includes(lowerSearch) ||
-          item.vrno?.toLowerCase().includes(lowerSearch) ||
-          item.indent_no?.toLowerCase().includes(lowerSearch) ||
-          item.po_no?.toLowerCase().includes(lowerSearch) ||
-          item.INDENT_NUMBER?.toLowerCase().includes(lowerSearch) ||
-          item.indent_number?.toLowerCase().includes(lowerSearch)
-        );
+        return Object.entries(item).some(([key, val]) => {
+          if (val == null) return false;
+          const strVal = val.toString().toLowerCase();
+          if (strVal.includes(lowerSearch)) return true;
+
+          // Date-aware search: check formatted string (DD/MM/YYYY)
+          const k = key.toLowerCase();
+          if (k.includes('date') || k.includes('timestamp')) {
+            const formatted = formatDate(val);
+            if (formatted !== "—" && formatted.toLowerCase().includes(lowerSearch)) return true;
+          }
+          return false;
+        });
       });
     }
 
@@ -571,7 +535,7 @@ export default function StoreDashboard() {
       </div>
 
       {/* Hero Metrics Cards - Updated Grid to 5 columns on large screens */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
         {cards.map((card) => (
           <button
             key={card.title}
@@ -672,7 +636,12 @@ export default function StoreDashboard() {
             </div>
           </CardHeader>
           <CardContent className="p-8 space-y-10">
-            <KpiItem label="Purchase Performance" value={dashboardData ? Math.round((dashboardData.totalPurchaseOrders / dashboardData.totalIndents) * 100) : 0} color="from-indigo-500 to-blue-500" icon={<Truck size={16} />} />
+            <KpiItem
+              label="Purchase Performance"
+              value={(dashboardData && dashboardData.totalIndents > 0) ? Math.round((dashboardData.totalPurchaseOrders / dashboardData.totalIndents) * 100) : 0}
+              color="from-indigo-500 to-blue-500"
+              icon={<Truck size={16} />}
+            />
             {/* <KpiItem label="Inventory Turnover" value={dashboardData ? Math.round((dashboardData.totalIssuedQuantity / dashboardData.totalPurchasedQuantity) * 100) : 0} color="from-emerald-500 to-teal-500" icon={<Package size={16} />} /> */}
           </CardContent>
         </Card>
