@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://new-store-repair.sagartmt.com/api/:path*"
+      "destination": "https://store-backend.sagartmt.com/api/:path*"
     },
     {
       "source": "/(.*)",
