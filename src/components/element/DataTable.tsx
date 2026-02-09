@@ -84,18 +84,24 @@ export default function DataTable<TData, TValue>({
   return (
     <div className="p-5 grid gap-4">
       {/* 🔍 Internal search (agar searchFields diye ho) */}
-      <div className="flex gap-3 w-full">
-        {searchFields.length !== 0 && (
-          <div className="flex items-center w-full">
-            <Input
-              placeholder={`Search...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-          </div>
-        )}
-        {children && children}
+      <div className="flex flex-col md:flex-row gap-3 w-full items-start md:items-center justify-between">
+        <div className="flex gap-3 items-center flex-1 w-full">
+          {searchFields.length !== 0 && (
+            <div className="flex items-center w-full max-w-sm">
+              <Input
+                placeholder={`Search ${searchableFields.join(", ")}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          )}
+          {children && children}
+        </div>
+
+        <div className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+          Total: <span className="text-foreground font-bold">{filteredData.length}</span> {filteredData.length === 1 ? 'row' : 'rows'}
+        </div>
       </div>
 
       {/* 🔁 Scroll container + sticky header */}
@@ -106,7 +112,7 @@ export default function DataTable<TData, TValue>({
             className
           )}
         >
-          <div 
+          <div
             className="overflow-y-auto overflow-x-auto w-full"
             style={{ maxHeight: scrollHeight }}
           >
@@ -126,9 +132,9 @@ export default function DataTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     ))}
                   </TableRow>

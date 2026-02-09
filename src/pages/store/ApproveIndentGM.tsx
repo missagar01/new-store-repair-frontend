@@ -16,6 +16,7 @@ import {
 } from "../../components/ui/dialog";
 import { storeApi } from "../../services";
 import { Button } from "../../components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 
 type IndentRow = {
     id?: string;
@@ -159,9 +160,26 @@ export default function ApproveIndentGM() {
                 // GM only sees items that are HOD-APPROVED and GM-PENDING
                 const isHodApproved = hodStatus === "APPROVED";
                 const isGmPending = !gmStatus || gmStatus === "" || gmStatus === "PENDING";
-                const isIndent = formType === "INDENT";
+                const isAllowedType = formType === "INDENT" || formType === "REQUISITION";
 
-                return isHodApproved && isGmPending && isIndent;
+                return isHodApproved && isGmPending && isAllowedType;
+            }),
+        [rows]
+    );
+
+    const historyRows = useMemo(
+        () =>
+            rows.filter((r) => {
+                const hodStatus = (r.status || "").toUpperCase();
+                const gmStatus = (r.gmStatus || "").toUpperCase();
+                const formType = (r.formType || "").toUpperCase();
+
+                // Show processing history (APPROVED or REJECTED by GM or REJECTED by HOD)
+                const isGmProcessed = gmStatus === "APPROVED" || gmStatus === "REJECTED";
+                const isHodRejected = hodStatus === "REJECTED";
+                const isAllowedType = formType === "INDENT" || formType === "REQUISITION";
+
+                return (isGmProcessed || isHodRejected) && isAllowedType;
             }),
         [rows]
     );
@@ -205,7 +223,50 @@ export default function ApproveIndentGM() {
         [fetchRequestItems]
     );
 
-    const columns: ColumnDef<IndentRow>[] = useMemo(
+    const commonColumns: ColumnDef<IndentRow>[] = [
+        {
+            accessorKey: "timestamp",
+            header: "Timestamp",
+            cell: ({ row }) => {
+                const timestamp = row.original.timestamp;
+                if (!timestamp) return "";
+                const date = new Date(timestamp);
+                return date.toLocaleString("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+            },
+        },
+        { accessorKey: "requestNumber", header: "Request No." },
+        { accessorKey: "formType", header: "Form Type" },
+        { accessorKey: "indentSeries", header: "Series" },
+        { accessorKey: "requesterName", header: "Requester" },
+        { accessorKey: "department", header: "Department" },
+        { accessorKey: "division", header: "Division" },
+        { accessorKey: "itemCode", header: "Item Code" },
+        { accessorKey: "productName", header: "Product" },
+        { accessorKey: "uom", header: "UOM" },
+        { accessorKey: "requestQty", header: "Qty" },
+        { accessorKey: "costLocation", header: "Cost Location" },
+        {
+            accessorKey: "status",
+            header: "HOD Status",
+            cell: ({ row }) => {
+                const status = (row.original.status || "").toUpperCase();
+                return (
+                    <span className={status === "APPROVED" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                        {status || "PENDING"}
+                    </span>
+                );
+            }
+        },
+    ];
+
+    const pendingColumns: ColumnDef<IndentRow>[] = useMemo(
         () => [
             {
                 id: "actions",
@@ -225,43 +286,28 @@ export default function ApproveIndentGM() {
                     </div>
                 ),
             },
-            {
-                accessorKey: "timestamp",
-                header: "Timestamp",
-                cell: ({ row }) => {
-                    const timestamp = row.original.timestamp;
-                    if (!timestamp) return "";
-                    const date = new Date(timestamp);
-                    return date.toLocaleString("en-IN", {
-                        timeZone: "Asia/Kolkata",
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    });
-                },
-            },
-            { accessorKey: "requestNumber", header: "Request No." },
-            { accessorKey: "formType", header: "Form Type" },
-            { accessorKey: "indentSeries", header: "Series" },
-            { accessorKey: "requesterName", header: "Requester" },
-            { accessorKey: "department", header: "Department" },
-            { accessorKey: "division", header: "Division" },
-            { accessorKey: "itemCode", header: "Item Code" },
-            { accessorKey: "productName", header: "Product" },
-            { accessorKey: "uom", header: "UOM" },
-            { accessorKey: "requestQty", header: "Qty" },
-            { accessorKey: "costLocation", header: "Cost Location" },
-            {
-                accessorKey: "status",
-                header: "HOD Status",
-                cell: ({ row }) => (
-                    <span className="text-green-600 font-medium">HOD APPROVED</span>
-                )
-            },
+            ...commonColumns,
         ],
         [handleProcess]
+    );
+
+    const historyColumns: ColumnDef<IndentRow>[] = useMemo(
+        () => [
+            ...commonColumns,
+            {
+                accessorKey: "gmStatus",
+                header: "GM Status",
+                cell: ({ row }) => {
+                    const status = (row.original.gmStatus || "").toUpperCase();
+                    return (
+                        <span className={status === "APPROVED" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {status || "PENDING"}
+                        </span>
+                    );
+                }
+            },
+        ],
+        []
     );
 
     function selectFromRow(r: IndentRow) {
@@ -324,24 +370,34 @@ export default function ApproveIndentGM() {
                 <ClipboardCheck size={50} className="text-primary" />
             </Heading>
 
-            <div className="grid gap-4">
-                <div>
-                    <DataTable
-                        data={gmPendingRows}
-                        columns={columns}
-                        searchFields={[
-                            "requestNumber",
-                            "requesterName",
-                            "department",
-                            "indentSeries",
-                            "division",
-                            "itemCode",
-                            "productName",
-                        ]}
-                        dataLoading={loading}
-                        className="h-[70dvh]"
-                    />
-                </div>
+            <div className="mt-4">
+                <Tabs defaultValue="active" className="w-full">
+                    <TabsList className="mb-4">
+                        <TabsTrigger value="active">GM Pending ({gmPendingRows.length})</TabsTrigger>
+                        <TabsTrigger value="history">Processed ({historyRows.length})</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="active">
+                        <DataTable
+                            data={gmPendingRows}
+                            columns={pendingColumns}
+                            dataLoading={loading}
+                            className="h-[70dvh]"
+                        />
+                        <p className="text-sm text-muted-foreground mt-2">
+                            Tip: Click a row, then use Process to open all items for that request number.
+                        </p>
+                    </TabsContent>
+
+                    <TabsContent value="history">
+                        <DataTable
+                            data={historyRows}
+                            columns={historyColumns}
+                            dataLoading={loading}
+                            className="h-[70dvh]"
+                        />
+                    </TabsContent>
+                </Tabs>
             </div>
 
             <RowClickBinder rows={gmPendingRows} onPick={selectFromRow} />
@@ -400,12 +456,21 @@ export default function ApproveIndentGM() {
                                             <td className="px-2 py-1 w-24">
                                                 <Input
                                                     type="number"
-                                                    readOnly
                                                     value={
                                                         typeof item.requestQty === "number"
                                                             ? item.requestQty
                                                             : item.requestQty || ""
                                                     }
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setModalItems((prev) =>
+                                                            prev.map((m, i) =>
+                                                                i === idx
+                                                                    ? { ...m, requestQty: val ? Number(val) : 0 }
+                                                                    : m
+                                                            )
+                                                        );
+                                                    }}
                                                 />
                                             </td>
                                             <td className="px-2 py-1">

@@ -16,6 +16,8 @@ import {
 } from "../../components/ui/dialog";
 import { storeApi } from "../../services";
 import { Button } from "../../components/ui/button";
+import { useAuth } from "../../context/AuthContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 
 type IndentRow = {
   id?: string;
@@ -32,6 +34,7 @@ type IndentRow = {
   costLocation?: string;
   formType?: string;
   status?: "APPROVED" | "REJECTED" | "PENDING" | "";
+  gmStatus?: "APPROVED" | "REJECTED" | "PENDING" | "";
 };
 
 const mapApiRowToIndent = (rec: Record<string, unknown>): IndentRow => {
@@ -77,6 +80,7 @@ const mapApiRowToIndent = (rec: Record<string, unknown>): IndentRow => {
       "",
     formType: (rec["form_type"] as string) ?? (rec["formType"] as string) ?? "",
     status: normalizeStatus(rec["request_status"]),
+    gmStatus: normalizeStatus(rec["gm_approval"]),
   };
 };
 
@@ -147,16 +151,54 @@ export default function ApprowIndentData() {
     };
   }, []);
 
+  const { user } = useAuth();
+
   const pendingRows = useMemo(
     () =>
       rows.filter((r) => {
         const status = (r.status || "").toUpperCase();
         const formType = (r.formType || "").toUpperCase();
-        const isPending = !status || status === "" || status === "PENDING";
-        const isIndent = formType === "INDENT";
-        return isPending && isIndent;
+
+        // Strictly only show if status is PENDING
+        const isPending = status === "PENDING";
+        const isAllowedType = formType === "INDENT" || formType === "REQUISITION";
+
+        if (!isPending || !isAllowedType) return false;
+
+        const role = String(user?.role || "").toUpperCase();
+        const userDept = (user?.user_access || user?.department || "").toUpperCase();
+
+        if (role !== "ADMIN" && userDept) {
+          return (r.department || "").toUpperCase() === userDept;
+        }
+
+        return true;
       }),
-    [rows]
+    [rows, user]
+  );
+
+  const historyRows = useMemo(
+    () =>
+      rows.filter((r) => {
+        const status = (r.status || "").toUpperCase();
+        const formType = (r.formType || "").toUpperCase();
+
+        // Show processing history (APPROVED or REJECTED by HOD)
+        const isProcessed = status === "APPROVED" || status === "REJECTED";
+        const isAllowedType = formType === "INDENT" || formType === "REQUISITION";
+
+        if (!isProcessed || !isAllowedType) return false;
+
+        const role = String(user?.role || "").toUpperCase();
+        const userDept = (user?.user_access || user?.department || "").toUpperCase();
+
+        if (role !== "ADMIN" && userDept) {
+          return (r.department || "").toUpperCase() === userDept;
+        }
+
+        return true;
+      }),
+    [rows, user]
   );
 
   const fetchRequestItems = useCallback(async (requestNo: string) => {
@@ -198,7 +240,38 @@ export default function ApprowIndentData() {
     [fetchRequestItems]
   );
 
-  const columns: ColumnDef<IndentRow>[] = useMemo(
+  const commonColumns: ColumnDef<IndentRow>[] = [
+    {
+      accessorKey: "timestamp",
+      header: "Timestamp",
+      cell: ({ row }) => {
+        const timestamp = row.original.timestamp;
+        if (!timestamp) return "";
+        const date = new Date(timestamp);
+        return date.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      },
+    },
+    { accessorKey: "requestNumber", header: "Request No." },
+    { accessorKey: "formType", header: "Form Type" },
+    { accessorKey: "indentSeries", header: "Series" },
+    { accessorKey: "requesterName", header: "Requester" },
+    { accessorKey: "department", header: "Department" },
+    { accessorKey: "division", header: "Division" },
+    { accessorKey: "itemCode", header: "Item Code" },
+    { accessorKey: "productName", header: "Product" },
+    { accessorKey: "uom", header: "UOM" },
+    { accessorKey: "requestQty", header: "Qty" },
+    { accessorKey: "costLocation", header: "Cost Location" },
+  ];
+
+  const pendingColumns: ColumnDef<IndentRow>[] = useMemo(
     () => [
       {
         id: "actions",
@@ -218,36 +291,14 @@ export default function ApprowIndentData() {
           </div>
         ),
       },
-      {
-        accessorKey: "timestamp",
-        header: "Timestamp",
-        cell: ({ row }) => {
-          const timestamp = row.original.timestamp;
-          if (!timestamp) return "";
-          const date = new Date(timestamp);
-          return date.toLocaleString("en-IN", {
-            timeZone: "Asia/Kolkata",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        },
-      },
-      { accessorKey: "requestNumber", header: "Request No." },
-      { accessorKey: "formType", header: "Form Type" },
-      { accessorKey: "indentSeries", header: "Series" },
-      { accessorKey: "requesterName", header: "Requester" },
-      { accessorKey: "department", header: "Department" },
-      { accessorKey: "division", header: "Division" },
-      { accessorKey: "itemCode", header: "Item Code" },
-      { accessorKey: "productName", header: "Product" },
-      { accessorKey: "uom", header: "UOM" },
-      { accessorKey: "requestQty", header: "Qty" },
-      { accessorKey: "costLocation", header: "Cost Location" },
+      ...commonColumns,
     ],
     [handleProcess]
+  );
+
+  const historyColumns: ColumnDef<IndentRow>[] = useMemo(
+    () => [...commonColumns],
+    []
   );
 
   function selectFromRow(r: IndentRow) {
@@ -311,27 +362,34 @@ export default function ApprowIndentData() {
         <ClipboardCheck size={50} className="text-primary" />
       </Heading>
 
-      <div className="grid gap-4">
-        <div>
-          <DataTable
-            data={pendingRows}
-            columns={columns}
-            searchFields={[
-              "requestNumber",
-              "requesterName",
-              "department",
-              "indentSeries",
-              "division",
-              "itemCode",
-              "productName",
-            ]}
-            dataLoading={loading}
-            className="h-[70dvh]"
-          />
-          <p className="text-sm text-muted-foreground mt-2">
-            Tip: Click a row, then use Edit to open all items for that request number.
-          </p>
-        </div>
+      <div className="mt-4">
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="active">Active Indents ({pendingRows.length})</TabsTrigger>
+            <TabsTrigger value="history">History ({historyRows.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active">
+            <DataTable
+              data={pendingRows}
+              columns={pendingColumns}
+              dataLoading={loading}
+              className="h-[70dvh]"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              Tip: Click a row, then use Edit to open all items for that request number.
+            </p>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <DataTable
+              data={historyRows}
+              columns={historyColumns}
+              dataLoading={loading}
+              className="h-[70dvh]"
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <RowClickBinder rows={pendingRows} onPick={selectFromRow} />

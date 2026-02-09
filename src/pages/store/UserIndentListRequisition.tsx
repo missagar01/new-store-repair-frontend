@@ -187,34 +187,25 @@ export default function UserIndentListRequisition() {
   }, [rows]);
 
   const columns: ColumnDef<IndentRow>[] = [
-    {
-      accessorKey: "timestamp",
-      header: "Timestamp",
-      cell: ({ row }) => {
-        const timestamp = row.original.timestamp;
-        if (!timestamp) return "";
-        const date = new Date(timestamp);
-        if (Number.isNaN(date.getTime())) return timestamp;
-        return date.toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      },
-    },
+    // {
+    //   accessorKey: "timestamp",
+    //   header: "Timestamp",
+    //   cell: ({ row }) => {
+    //     const timestamp = row.original.timestamp;
+    //     if (!timestamp) return "";
+    //     const date = new Date(timestamp);
+    //     if (Number.isNaN(date.getTime())) return timestamp;
+    //     return date.toLocaleString("en-IN", {
+    //       timeZone: "Asia/Kolkata",
+    //       year: "numeric",
+    //       month: "short",
+    //       day: "numeric",
+    //       hour: "2-digit",
+    //       minute: "2-digit",
+    //     });
+    //   },
+    // },
     { accessorKey: "requestNumber", header: "Request No." },
-    { accessorKey: "indentSeries", header: "Series" },
-    { accessorKey: "requesterName", header: "Requester" },
-    { accessorKey: "department", header: "Department" },
-    { accessorKey: "division", header: "Division" },
-    { accessorKey: "itemCode", header: "Item Code" },
-    { accessorKey: "productName", header: "Product" },
-    { accessorKey: "uom", header: "UOM" },
-    { accessorKey: "requestQty", header: "Qty" },
-    { accessorKey: "costLocation", header: "Cost Location" },
     {
       accessorKey: "requestStatus",
       header: "HOD Status",
@@ -259,6 +250,16 @@ export default function UserIndentListRequisition() {
         return <span className="font-medium text-blue-600">PENDING GM</span>;
       },
     },
+    { accessorKey: "indentSeries", header: "Series" },
+    { accessorKey: "requesterName", header: "Requester" },
+    { accessorKey: "department", header: "Department" },
+    { accessorKey: "division", header: "Division" },
+    { accessorKey: "itemCode", header: "Item Code" },
+    { accessorKey: "productName", header: "Product" },
+    { accessorKey: "uom", header: "UOM" },
+    { accessorKey: "requestQty", header: "Qty" },
+    { accessorKey: "costLocation", header: "Cost Location" },
+
   ];
 
   return (

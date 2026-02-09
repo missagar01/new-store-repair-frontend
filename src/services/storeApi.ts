@@ -107,11 +107,12 @@ export const storeApi = {
       body: JSON.stringify(data),
     }),
 
-  updateIndentNumber: (requestNumber: string, indentNumber: string) =>
+  updateIndentNumber: (requestNumber: string, indentNumber: string, actual1?: string) =>
     apiRequest(`/indent/${requestNumber}/indent-number`, {
       method: "PATCH",
       body: JSON.stringify({
         indent_number: indentNumber,
+        actual_1: actual1,
       }),
     }),
 

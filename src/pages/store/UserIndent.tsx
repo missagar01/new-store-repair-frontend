@@ -483,6 +483,8 @@ export default function UserIndent() {
 
       const requestNumber = await generateRequestNumber(data.formType);
 
+      const isHod = String(authUser?.store_role_access || "").toLowerCase().includes("hod");
+
       const payloads = data.items
         .filter((item) => item.productName && item.itemCode)
         .map((item) => ({
@@ -501,7 +503,7 @@ export default function UserIndent() {
           make: item.make,
           purpose: item.purpose,
           cost_location: item.costLocation,
-          request_state: "PENDING",
+          request_status: isHod ? "APPROVED" : "PENDING",
           request_number: requestNumber,
           created_at: new Date().toISOString(),
         }));

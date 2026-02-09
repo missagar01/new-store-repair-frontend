@@ -16,6 +16,7 @@ export interface LoginResponse {
     employee_id?: string;
     role: string;
     access?: string[];
+    store_role_access?: string;
   };
   message?: string;
 }

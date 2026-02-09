@@ -66,13 +66,20 @@ export default function UserIndentList() {
             productName: String(r.product_name ?? r.productName ?? ""),
             requestQty: Number(r.request_qty ?? r.requestQty ?? 0) || 0,
             uom: String(r.uom ?? ""),
+            specification: String(r.specification ?? ""),
             make: String(r.make ?? ""),
             purpose: String(r.purpose ?? ""),
             costLocation: String(r.cost_location ?? r.costLocation ?? ""),
             requestStatus: String(r.request_status ?? r.requestStatus ?? ""),
             gmApproval: String(r.gm_approval ?? r.gmApproval ?? ""),
+            planned_1: r.planned_1,
+            actual_1: r.actual_1,
+            time_delay_1: r.time_delay_1,
           }))
-          .filter((r: IndentRow) => (r.formType || "").toUpperCase() === "INDENT");
+          .filter((r: IndentRow) => {
+            const type = (r.formType || "").toUpperCase();
+            return type === "INDENT" || type === "REQUISITION";
+          });
 
         setRows(mapped);
       } catch (err) {
@@ -95,12 +102,15 @@ export default function UserIndentList() {
 
   const filteredRows = useMemo(() => {
     const currentName = (user as { user_name?: string; name?: string })?.user_name || (user as { user_name?: string; name?: string })?.name;
+    const role = String((user as any)?.role || "").toUpperCase();
     const productValue = productFilter[0] ?? "";
     const uomValue = uomFilter[0] ?? "";
     const locationValue = locationFilter[0] ?? "";
 
     let data = rows;
-    if (currentName) {
+    
+    // Only filter by requester if NOT an ADMIN
+    if (role !== "ADMIN" && currentName) {
       data = data.filter(
         (r) =>
           (r.requesterName || "").toLowerCase() ===
@@ -203,6 +213,31 @@ export default function UserIndentList() {
     { accessorKey: "uom", header: "UOM" },
     { accessorKey: "requestQty", header: "Qty" },
     { accessorKey: "costLocation", header: "Cost Location" },
+    { accessorKey: "specification", header: "Specification" },
+    { accessorKey: "make", header: "Make" },
+    { accessorKey: "purpose", header: "Purpose" },
+    {
+      accessorKey: "planned_1",
+      header: "Planned Date",
+      cell: ({ row }) => (row.original as any).planned_1 ? new Date((row.original as any).planned_1).toLocaleDateString("en-GB") : "-"
+    },
+    {
+      accessorKey: "actual_1",
+      header: "Actual Date",
+      cell: ({ row }) => (row.original as any).actual_1 ? new Date((row.original as any).actual_1).toLocaleDateString("en-GB") : "-"
+    },
+    {
+      accessorKey: "time_delay_1",
+      header: "Delay",
+      cell: ({ row }) => {
+        const delay = (row.original as any).time_delay_1;
+        if (!delay) return "-";
+        if (typeof delay === 'object') {
+          return `${delay.days || 0}d ${delay.hours || 0}h`;
+        }
+        return String(delay);
+      }
+    },
     {
       accessorKey: "requestStatus",
       header: "HOD Status",
@@ -295,17 +330,6 @@ export default function UserIndentList() {
       <DataTable
         data={filteredRows}
         columns={columns}
-        searchFields={[
-          "requestNumber",
-          "formType",
-          "indentSeries",
-          "requesterName",
-          "department",
-          "division",
-          "itemCode",
-          "productName",
-          "costLocation",
-        ]}
         dataLoading={loading}
         className="h-[74dvh]"
       >

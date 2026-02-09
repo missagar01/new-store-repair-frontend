@@ -11,6 +11,7 @@ interface User {
   user_access?: string | null;
   department?: string | null;
   store_access?: string;
+  store_role_access?: string | null;
 }
 
 interface AuthContextType {
@@ -47,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             employee_id: (decoded.employee_id as string) || '',
             role: (decoded.role as string) || '',
             access: [],
+            store_role_access: (decoded.store_role_access as string) || null,
           });
         }
       }
@@ -75,6 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           department: String(decoded?.department) || null,
           access: [],
           store_access: '',
+          store_role_access: (decoded?.store_role_access as string) || null,
         };
 
         // Ensure department/user_access is included from response

@@ -21,6 +21,7 @@ type IndentRow = {
   itemCode?: string;
   productName?: string;
   requestQty?: number;
+  approvedQty?: number;
   uom?: string;
   make?: string;
   purpose?: string;
@@ -61,7 +62,7 @@ export default function UserIndentListIndent() {
     const fetchIndents = async () => {
       setLoading(true);
       try {
-        const res = await storeApi.getAllIndents();
+        const res: any = await storeApi.getAllIndents();
         if (!active) return;
         const list = Array.isArray(res?.data)
           ? res.data
@@ -87,15 +88,23 @@ export default function UserIndentListIndent() {
             itemCode: r.item_code ?? r.itemCode ?? "",
             productName: r.product_name ?? r.productName ?? "",
             requestQty: Number(r.request_qty ?? r.requestQty ?? 0) || 0,
+            approvedQty: Number(r.approved_quantity ?? r.approvedQuantity ?? 0) || 0,
             uom: r.uom ?? "",
             make: r.make ?? "",
             purpose: r.purpose ?? "",
             costLocation: r.cost_location ?? r.costLocation ?? "",
             requestStatus: r.request_status ?? "",
-            gmApproval: r.gm_approval ?? "",
+            gmApproval: r.gm_approval ?? r.gmApproval ?? "",
+            specification: String(r.specification ?? ""),
+            planned_1: r.planned_1,
+            actual_1: r.actual_1,
+            time_delay_1: r.time_delay_1,
           }))
           .filter(
-            (row: IndentRow) => (row.formType || "").toUpperCase() === "INDENT" && Boolean(row.indentNumber?.trim())
+            (row: IndentRow) => {
+              const type = (row.formType || "").toUpperCase();
+              return (type === "INDENT" || type === "REQUISITION") && Boolean(row.indentNumber?.trim());
+            }
           );
 
         setRows(mapped);
@@ -118,13 +127,16 @@ export default function UserIndentListIndent() {
   }, []);
 
   const filteredRows = useMemo(() => {
-    const currentName = user?.name || user?.user_name;
+    const currentName = (user as any)?.user_name || (user as any)?.name;
+    const role = String((user as any)?.role || "").toUpperCase();
     const productValue = productFilter[0] ?? "";
     const uomValue = uomFilter[0] ?? "";
     const locationValue = locationFilter[0] ?? "";
 
     let data = rows;
-    if (currentName) {
+
+    // Only filter by requester if NOT an ADMIN
+    if (role !== "ADMIN" && currentName) {
       data = data.filter(
         (row) =>
           (row.requesterName || "").toLowerCase() ===
@@ -200,21 +212,6 @@ export default function UserIndentListIndent() {
   const columns: ColumnDef<IndentRow>[] = [
     { accessorKey: "indentNumber", header: "Indent No." },
     {
-      accessorKey: "timestamp",
-      header: "Timestamp",
-      cell: ({ row }) => formatIndianDateTime(row.original.timestamp),
-    },
-    { accessorKey: "requestNumber", header: "Request No." },
-    { accessorKey: "indentSeries", header: "Series" },
-    { accessorKey: "requesterName", header: "Requester" },
-    { accessorKey: "department", header: "Department" },
-    { accessorKey: "division", header: "Division" },
-    { accessorKey: "itemCode", header: "Item Code" },
-    { accessorKey: "productName", header: "Product" },
-    { accessorKey: "uom", header: "UOM" },
-    { accessorKey: "requestQty", header: "Qty" },
-    { accessorKey: "costLocation", header: "Cost Location" },
-    {
       accessorKey: "requestStatus",
       header: "HOD Status",
       cell: ({ row }) => {
@@ -257,6 +254,30 @@ export default function UserIndentListIndent() {
 
         return <span className="font-medium text-blue-600">PENDING GM</span>;
       },
+    },
+    { accessorKey: "requestNumber", header: "Request No." },
+    { accessorKey: "indentSeries", header: "Series" },
+    { accessorKey: "requesterName", header: "Requester" },
+    { accessorKey: "department", header: "Department" },
+    { accessorKey: "division", header: "Division" },
+    { accessorKey: "itemCode", header: "Item Code" },
+    { accessorKey: "productName", header: "Product" },
+    { accessorKey: "uom", header: "UOM" },
+    { accessorKey: "requestQty", header: "Qty" },
+    { accessorKey: "approvedQty", header: "Approved Qty" },
+    { accessorKey: "costLocation", header: "Cost Location" },
+    { accessorKey: "specification", header: "Specification" },
+    { accessorKey: "make", header: "Make" },
+    { accessorKey: "purpose", header: "Purpose" },
+    {
+      accessorKey: "planned_1",
+      header: "Planned Date",
+      cell: ({ row }) => (row.original as any).planned_1 ? new Date((row.original as any).planned_1).toLocaleDateString("en-GB") : "-"
+    },
+    {
+      accessorKey: "actual_1",
+      header: "Actual Date",
+      cell: ({ row }) => (row.original as any).actual_1 ? new Date((row.original as any).actual_1).toLocaleDateString("en-GB") : "-"
     },
   ];
 
@@ -301,16 +322,6 @@ export default function UserIndentListIndent() {
       <DataTable
         data={filteredRows}
         columns={columns}
-        searchFields={[
-          "requestNumber",
-          "indentSeries",
-          "requesterName",
-          "department",
-          "division",
-          "itemCode",
-          "productName",
-          "costLocation",
-        ]}
         dataLoading={loading}
         className="h-[74dvh]"
       >
