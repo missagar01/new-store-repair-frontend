@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import {
-    Command,
-    CommandInput,
-    CommandItem,
-    CommandList,
-    CommandGroup,
-    CommandEmpty,
+  Command,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandGroup,
+  CommandEmpty,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -57,14 +57,18 @@ export function ComboBox({
     return options.find((opt) => opt.value === value[0])?.label ?? placeholder;
   };
 
-  const filteredOptions = options.filter((opt) => {
-    if (!search.trim()) return true;
-    const needle = search.toLowerCase();
-    return (
-      opt.label.toLowerCase().includes(needle) ||
-      opt.value.toLowerCase().includes(needle)
-    );
-  });
+  const filteredOptions = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    const filtered = options.filter((opt) => {
+      if (!needle) return true;
+      return (
+        opt.label.toLowerCase().includes(needle) ||
+        opt.value.toLowerCase().includes(needle)
+      );
+    });
+    // Limit rendered results to improve DOM performance
+    return filtered.slice(0, 100);
+  }, [options, search]);
 
   return (
     <Popover open={open && !disabled} onOpenChange={(val) => !disabled && setOpen(val)}>

@@ -14,6 +14,7 @@ type IndentRow = {
   formType?: string;
   requestNumber?: string;
   indentSeries?: string;
+  indentNumber?: string;
   requesterName?: string;
   department?: string;
   division?: string;
@@ -43,7 +44,20 @@ export default function UserIndentList() {
     const fetchIndents = async () => {
       setLoading(true);
       try {
-        const res = await storeApi.getAllIndents();
+        const username = (user as { user_name?: string; name?: string })?.user_name || (user as { user_name?: string; name?: string })?.name || "";
+        const currentName = String(username).trim();
+        const role = String((user as any)?.role || "").toUpperCase();
+
+        let res: any;
+        if (role !== "ADMIN" && currentName) {
+          res = await storeApi.filterIndents({
+            requesterName: currentName,
+            limit: 500,
+          });
+        } else {
+          res = await storeApi.getAllIndents();
+        }
+
         if (!active) return;
 
         const resData = (res as { data?: unknown }).data;
@@ -59,6 +73,7 @@ export default function UserIndentList() {
             formType: String(r.form_type ?? r.formType ?? ""),
             requestNumber: String(r.request_number ?? r.requestNumber ?? ""),
             indentSeries: String(r.indent_series ?? r.indentSeries ?? ""),
+            indentNumber: String(r.indent_number ?? r.indentNumber ?? ""),
             requesterName: String(r.requester_name ?? r.requesterName ?? ""),
             department: String(r.department ?? ""),
             division: String(r.division ?? ""),
@@ -98,7 +113,7 @@ export default function UserIndentList() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   const filteredRows = useMemo(() => {
     const currentName = (user as { user_name?: string; name?: string })?.user_name || (user as { user_name?: string; name?: string })?.name;
@@ -108,7 +123,7 @@ export default function UserIndentList() {
     const locationValue = locationFilter[0] ?? "";
 
     let data = rows;
-    
+
     // Only filter by requester if NOT an ADMIN
     if (role !== "ADMIN" && currentName) {
       data = data.filter(
@@ -184,6 +199,17 @@ export default function UserIndentList() {
   }, [rows]);
 
   const columns: ColumnDef<IndentRow>[] = [
+    {
+      accessorKey: "indentNumber",
+      header: "Indent No.",
+      cell: ({ row }) => {
+        const val = row.original.indentNumber;
+        if (!val || !val.trim()) {
+          return <span className="text-gray-400 italic">not process in ERP</span>;
+        }
+        return val;
+      }
+    },
     {
       accessorKey: "timestamp",
       header: "Timestamp",

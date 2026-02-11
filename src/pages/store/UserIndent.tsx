@@ -131,6 +131,15 @@ export default function UserIndent() {
     return uniqueGroups.map((group) => ({ label: group || "", value: group || "" }));
   }, [storeItems]);
 
+  const productOptions = useMemo(
+    () =>
+      storeItems.map((item) => ({
+        label: item.itemname || "",
+        value: item.item_code || "",
+      })),
+    [storeItems]
+  );
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const queryType = params.get("formType");
@@ -344,25 +353,25 @@ export default function UserIndent() {
 
   useEffect(() => {
     const fetchLocations = async () => {
-      if (!division) {
-        setCostLocations([]);
-        if (previousDivision) {
-          const currentItems = getValues("items");
-          currentItems.forEach((_, index) => {
-            setValue(`items.${index}.costLocation`, "");
-          });
-        }
-        setPreviousDivision("");
-        return;
-      }
-
       const divisionChanged =
         previousDivision !== "" && previousDivision !== division;
+
+      if (!division && previousDivision) {
+        // If division becomes empty from a previous value, clear item cost locations
+        const currentItems = getValues("items");
+        currentItems.forEach((_, index) => {
+          setValue(`items.${index}.costLocation`, "");
+        });
+      }
+      setPreviousDivision(division); // Update previousDivision here for the next render
 
       try {
         setLoadingCostLocations(true);
         let res: any;
-        if (division === "RP") {
+        if (!division) {
+          // Fetch all locations if no division is selected
+          res = await storeApi.getCostLocations();
+        } else if (division === "RP") {
           res = await storeApi.getCostLocationsRP();
         } else if (division === "PM") {
           res = await storeApi.getCostLocationsPM();
@@ -485,28 +494,35 @@ export default function UserIndent() {
 
       const isHod = String(authUser?.store_role_access || "").toLowerCase().includes("hod");
 
-      const payloads = data.items
-        .filter((item) => item.productName && item.itemCode)
-        .map((item) => ({
-          form_type: data.formType,
-          indent_series: data.indentSeries,
-          requester_name: data.requesterName,
-          department: data.department,
-          division: data.division,
-          item_code: item.itemCode,
-          product_name: item.productName,
-          category: item.category,
-          group_name: item.category,
-          request_qty: Number(item.requestQty) || 0,
-          uom: item.uom,
-          specification: item.specification.trim(),
-          make: item.make,
-          purpose: item.purpose,
-          cost_location: item.costLocation,
-          request_status: isHod ? "APPROVED" : "PENDING",
-          request_number: requestNumber,
-          created_at: new Date().toISOString(),
-        }));
+      const invalidItems = data.items.some(
+        (item) => !item.productName || !item.itemCode || !item.uom || !item.requestQty
+      );
+
+      if (invalidItems) {
+        toast.error("Please ensure all items have a Product, UOM, and Required Quantity");
+        return;
+      }
+
+      const payloads = data.items.map((item) => ({
+        form_type: data.formType,
+        indent_series: data.indentSeries,
+        requester_name: data.requesterName,
+        department: data.department,
+        division: data.division,
+        item_code: item.itemCode,
+        product_name: item.productName,
+        category: item.category,
+        group_name: item.category,
+        request_qty: Number(item.requestQty) || 0,
+        uom: item.uom,
+        specification: item.specification.trim(),
+        make: item.make,
+        purpose: item.purpose,
+        cost_location: item.costLocation,
+        request_status: isHod ? "APPROVED" : "PENDING",
+        request_number: requestNumber,
+        created_at: new Date().toISOString(),
+      }));
 
       if (!payloads.length) {
         toast.error("Add at least one valid item");
@@ -728,53 +744,17 @@ export default function UserIndent() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Group Name */}
-                    <FormField
-                      control={control}
-                      name={`items.${index}.category`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Group Name</FormLabel>
-                          <FormControl>
-                            <ComboBox
-                              options={groupOptions}
-                              value={field.value ? [field.value] : []}
-                              onChange={(val) => {
-                                const selectedGroup = val[0] || '';
-                                field.onChange(selectedGroup);
-                                setValue(`items.${index}.productName`, '');
-                                setValue(`items.${index}.itemCode`, '');
-                              }}
-                              placeholder={
-                                loadingProducts
-                                  ? 'Loading groups...'
-                                  : groupOptions.length === 0
-                                    ? 'No groups available'
-                                    : 'Select Group'
-                              }
-                              disabled={loadingProducts || groupOptions.length === 0}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
                     {/* Product Name */}
                     <FormField
                       control={control}
                       name={`items.${index}.productName`}
                       render={() => {
-                        const selectedGroup = watch(`items.${index}.category`);
-                        const productOptions = storeItems
-                          .filter((item) => item.groupname === selectedGroup)
-                          .map((item) => ({
-                            label: item.itemname || '',
-                            value: item.item_code || '',
-                          }));
-
                         return (
                           <FormItem>
-                            <FormLabel>Product Name</FormLabel>
+                            <FormLabel className="flex items-center gap-1">
+                              Product Name
+                              <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
                               <ComboBox
                                 options={productOptions}
@@ -789,22 +769,36 @@ export default function UserIndent() {
                                 placeholder={
                                   loadingProducts
                                     ? 'Loading products...'
-                                    : !selectedGroup
-                                      ? 'Select Group first'
-                                      : productOptions.length === 0
-                                        ? 'No items in group'
-                                        : 'Select Product'
+                                    : productOptions.length === 0
+                                      ? 'No products available'
+                                      : 'Search or Select Product'
                                 }
-                                disabled={
-                                  loadingProducts ||
-                                  !selectedGroup ||
-                                  productOptions.length === 0
-                                }
+                                disabled={loadingProducts}
+                                className="w-full"
                               />
                             </FormControl>
                           </FormItem>
                         );
                       }}
+                    />
+
+                    {/* Group Name (Now Auto-filled) */}
+                    <FormField
+                      control={control}
+                      name={`items.${index}.category`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Group Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              readOnly
+                              placeholder="Auto-filled from product"
+                              className="bg-gray-100 cursor-not-allowed"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
                     />
 
                     {/* Item Code */}
@@ -831,14 +825,16 @@ export default function UserIndent() {
                       name={`items.${index}.uom`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>UOM</FormLabel>
+                          <FormLabel className="flex items-center gap-1">
+                            UOM
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
                           <FormControl>
                             <ComboBox
                               options={uomOptions}
                               value={field.value ? [field.value] : []}
                               onChange={(val) => field.onChange(val[0] || '')}
                               placeholder="Select UOM"
-                              disabled={uomOptions.length === 0}
                             />
                           </FormControl>
                         </FormItem>
@@ -851,12 +847,16 @@ export default function UserIndent() {
                       name={`items.${index}.requestQty`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Required Qty</FormLabel>
+                          <FormLabel className="flex items-center gap-1">
+                            Required Qty
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               {...field}
                               placeholder="Enter Qty"
+                              min="1"
                             />
                           </FormControl>
                         </FormItem>
@@ -918,11 +918,9 @@ export default function UserIndent() {
                               placeholder={
                                 loadingCostLocations
                                   ? 'Loading locations...'
-                                  : !division
-                                    ? 'Select Division first'
-                                    : 'Select Cost Location'
+                                  : 'Select Cost Location'
                               }
-                              disabled={!division || loadingCostLocations}
+                              disabled={loadingCostLocations}
                             />
                           </FormControl>
                         </FormItem>

@@ -652,7 +652,7 @@ export default function StoreDashboard() {
 
       {/* Modal Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-[95vw] lg:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-0 shadow-2xl rounded-3xl">
+        <DialogContent className="max-w-[95vw] lg:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-0 shadow-2xl rounded-3xl [&>button]:hidden">
           <DialogHeader className="p-6 bg-indigo-600 text-white shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

@@ -93,6 +93,7 @@ export default function ApprowIndentData() {
   const [modalItems, setModalItems] = useState<IndentRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [itemStocks, setItemStocks] = useState<Record<string, number>>({});
 
   const canSave = useMemo(
     () =>
@@ -149,6 +150,43 @@ export default function ApprowIndentData() {
     return () => {
       active = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchStockData = async () => {
+      try {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, "0");
+        const d = String(today.getDate()).padStart(2, "0");
+        const todayFormatted = `${d}-${m}-${y}`;
+
+        const res = await storeApi.getStock(todayFormatted, todayFormatted);
+        let dataArray: any[] = [];
+        if (Array.isArray(res)) {
+          dataArray = res;
+        } else if (res && typeof res === "object") {
+          const r = res as any;
+          if (Array.isArray(r.data)) {
+            dataArray = r.data;
+          } else if (r.data?.data && Array.isArray(r.data.data)) {
+            dataArray = r.data.data;
+          }
+        }
+
+        const stockMap: Record<string, number> = {};
+        dataArray.forEach((r: any) => {
+          const code = String(r.COL1 ?? r.itemCode ?? "").trim();
+          const qty = Number(r.COL5 ?? r.closingQty ?? 0);
+          if (code) stockMap[code] = qty;
+        });
+        setItemStocks(stockMap);
+      } catch (err) {
+        console.error("Failed to fetch stock data", err);
+      }
+    };
+
+    fetchStockData();
   }, []);
 
   const { user } = useAuth();
@@ -267,6 +305,21 @@ export default function ApprowIndentData() {
     { accessorKey: "itemCode", header: "Item Code" },
     { accessorKey: "productName", header: "Product" },
     { accessorKey: "uom", header: "UOM" },
+    {
+      accessorKey: "itemCode",
+      header: "Stock",
+      id: "stock_col",
+      cell: ({ row }) => {
+        const code = row.original.itemCode || "";
+        const stock = itemStocks[code];
+        if (stock === undefined) return <span className="text-gray-400">-</span>;
+        return (
+          <span className={stock <= 0 ? "text-red-600 font-bold" : "text-green-600 font-medium"}>
+            {stock}
+          </span>
+        );
+      }
+    },
     { accessorKey: "requestQty", header: "Qty" },
     { accessorKey: "costLocation", header: "Cost Location" },
   ];
@@ -421,6 +474,7 @@ export default function ApprowIndentData() {
                   <th className="text-left px-2 py-2">Item Code</th>
                   <th className="text-left px-2 py-2">Item Name</th>
                   <th className="text-left px-2 py-2">UOM</th>
+                  <th className="text-left px-2 py-2">Stock</th>
                   <th className="text-left px-2 py-2 w-24">Qty</th>
                   <th className="text-left px-2 py-2">Status</th>
                   <th className="text-left px-2 py-2">Actions</th>
@@ -445,6 +499,15 @@ export default function ApprowIndentData() {
                       <td className="px-2 py-1">{item.itemCode}</td>
                       <td className="px-2 py-1">{item.productName}</td>
                       <td className="px-2 py-1">{item.uom}</td>
+                      <td className="px-2 py-1">
+                        {itemStocks[item.itemCode || ""] !== undefined ? (
+                          <span className={Number(itemStocks[item.itemCode || ""]) <= 0 ? "text-red-600 font-bold" : "text-green-600 font-medium"}>
+                            {itemStocks[item.itemCode || ""]}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
                       <td className="px-2 py-1 w-24">
                         <Input
                           type="number"

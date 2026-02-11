@@ -15,6 +15,7 @@ type IndentRow = {
   formType?: string;
   requestNumber?: string;
   indentSeries?: string;
+  indentNumber?: string;
   requesterName?: string;
   department?: string;
   division?: string;
@@ -51,7 +52,20 @@ export default function UserIndentListRequisition() {
     const fetchRequisitions = async () => {
       setLoading(true);
       try {
-        const res = await storeApi.getAllIndents();
+        const username = (user as any)?.user_name || (user as any)?.name || "";
+        const currentName = String(username).trim();
+        const role = String((user as any)?.role || "").toUpperCase();
+
+        let res: any;
+        if (role !== "ADMIN" && currentName) {
+          res = await storeApi.filterIndents({
+            requesterName: currentName,
+            limit: 500,
+          });
+        } else {
+          res = await storeApi.getAllIndents();
+        }
+
         if (!active) return;
 
         const list = Array.isArray(res?.data)
@@ -68,6 +82,7 @@ export default function UserIndentListRequisition() {
             formType: r.form_type ?? r.formType ?? "",
             requestNumber: r.request_number ?? r.requestNumber ?? "",
             indentSeries: r.indent_series ?? r.indentSeries ?? "",
+            indentNumber: r.indent_number ?? r.indentNumber ?? "",
             requesterName: r.requester_name ?? r.requesterName ?? "",
             department: r.department ?? "",
             division: r.division ?? "",
@@ -110,7 +125,7 @@ export default function UserIndentListRequisition() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   const filteredRows = useMemo(() => {
     const currentName = user?.name || user?.user_name;
@@ -205,6 +220,17 @@ export default function UserIndentListRequisition() {
     //     });
     //   },
     // },
+    {
+      accessorKey: "indentNumber",
+      header: "Indent No.",
+      cell: ({ row }) => {
+        const val = row.original.indentNumber;
+        if (!val || !val.trim()) {
+          return <span className="text-gray-400 italic">not process in ERP</span>;
+        }
+        return val;
+      }
+    },
     { accessorKey: "requestNumber", header: "Request No." },
     {
       accessorKey: "requestStatus",

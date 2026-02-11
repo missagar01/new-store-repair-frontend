@@ -62,7 +62,22 @@ export default function UserIndentListIndent() {
     const fetchIndents = async () => {
       setLoading(true);
       try {
-        const res: any = await storeApi.getAllIndents();
+        const username = (user as any)?.user_name || (user as any)?.name || "";
+        const currentName = String(username).trim();
+        const role = String((user as any)?.role || "").toUpperCase();
+
+        let res: any;
+        if (role !== "ADMIN" && currentName) {
+          // If not admin, specifically fetch for this requester with a larger limit
+          res = await storeApi.filterIndents({
+            requesterName: currentName,
+            limit: 500
+          });
+        } else {
+          // If admin, fetch all (still subject to limit, but maybe okay for now or increase it)
+          res = await storeApi.getAllIndents();
+        }
+
         if (!active) return;
         const list = Array.isArray(res?.data)
           ? res.data
@@ -103,7 +118,7 @@ export default function UserIndentListIndent() {
           .filter(
             (row: IndentRow) => {
               const type = (row.formType || "").toUpperCase();
-              return (type === "INDENT" || type === "REQUISITION") && Boolean(row.indentNumber?.trim());
+              return (type === "INDENT" || type === "REQUISITION");
             }
           );
 
@@ -124,10 +139,10 @@ export default function UserIndentListIndent() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   const filteredRows = useMemo(() => {
-    const currentName = (user as any)?.user_name || (user as any)?.name;
+    const currentName = String((user as any)?.user_name || (user as any)?.name || "").trim();
     const role = String((user as any)?.role || "").toUpperCase();
     const productValue = productFilter[0] ?? "";
     const uomValue = uomFilter[0] ?? "";
@@ -139,8 +154,8 @@ export default function UserIndentListIndent() {
     if (role !== "ADMIN" && currentName) {
       data = data.filter(
         (row) =>
-          (row.requesterName || "").toLowerCase() ===
-          String(currentName).toLowerCase()
+          (row.requesterName || "").trim().toLowerCase() ===
+          currentName.toLowerCase()
       );
     }
 
@@ -210,7 +225,17 @@ export default function UserIndentListIndent() {
   }, [rows]);
 
   const columns: ColumnDef<IndentRow>[] = [
-    { accessorKey: "indentNumber", header: "Indent No." },
+    {
+      accessorKey: "indentNumber",
+      header: "Indent No.",
+      cell: ({ row }) => {
+        const val = row.original.indentNumber;
+        if (!val || !val.trim()) {
+          return <span className="text-gray-400 italic">not process in ERP</span>;
+        }
+        return val;
+      }
+    },
     {
       accessorKey: "requestStatus",
       header: "HOD Status",
