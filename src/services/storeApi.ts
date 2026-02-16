@@ -204,4 +204,6 @@ export const storeApi = {
     apiRequest(`/departments/${id}`, {
       method: "DELETE",
     }),
+
+  getErpIndents: () => apiRequest("/erp-indent"),
 };

@@ -54,7 +54,8 @@ const storeAdminLimitedSubItems = [
 ];
 
 const storeUserSubItems = [
-  { name: "My Indent", path: "/store/user-indent-list-indent" },
+  { name: "My Indent", path: "/store/erp-indent" },
+  { name: "Requested Indent", path: "/store/user-indent-list-indent" },
   { name: "Requisition", path: "/store/user-requisition" },
   { name: "Create Indent", path: "/store/user-indent" },
 ];
@@ -135,7 +136,8 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 dark:border-gray-700 shadow-lg
+      className={`fixed flex flex-col px-5 left-0 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-all duration-300 ease-in-out z-50 border-r border-gray-200 dark:border-gray-700 shadow-lg
+        top-16 h-[calc(100vh-4rem)] lg:top-0 lg:h-screen lg:mt-0
         ${isExpanded || isMobileOpen
           ? "w-[290px]"
           : isHovered
@@ -165,8 +167,8 @@ const AppSidebar: React.FC = () => {
           )} */}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar h-full">
-        <nav className="mb-6 flex-1">
+      <div className="flex-1 overflow-y-auto duration-300 ease-linear custom-scrollbar pb-4 min-h-0">
+        <nav className="mb-6">
           <div className="flex flex-col gap-4">
             {/* Store Section */}
             {(isExpanded || isHovered || isMobileOpen) && (
@@ -195,10 +197,13 @@ const AppSidebar: React.FC = () => {
 
           </div>
         </nav>
+      </div>
 
+      {/* Fixed Footer Area */}
+      <div className="mt-auto border-t border-indigo-200/50 dark:border-indigo-800/50 pt-4 pb-4 bg-white dark:bg-gray-900">
         {/* User Info and Logout Button */}
         {(isExpanded || isHovered || isMobileOpen) && !hideUserProfileSection && (
-          <div className="mt-auto border-t border-indigo-200/50 dark:border-indigo-800/50 pt-4 pb-4">
+          <div>
             <div className="px-4 mb-3">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-md">
@@ -221,7 +226,7 @@ const AppSidebar: React.FC = () => {
                 await logout();
                 navigate("/login");
               }}
-              className="w-full mx-4 flex items-center gap-3 px-4 py-3 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-900/30 rounded-lg transition-all duration-200 font-medium"
+              className="w-full flex items-center gap-3 px-4 py-3 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-900/30 rounded-lg transition-all duration-200 font-medium"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Logout</span>
@@ -231,18 +236,16 @@ const AppSidebar: React.FC = () => {
 
         {/* Compact logout for dashboard view */}
         {hideUserProfileSection && (
-          <div className="mt-auto border-t border-indigo-200/50 dark:border-indigo-800/50 pt-4 pb-4">
-            <button
-              onClick={async () => {
-                await logout();
-                navigate("/login");
-              }}
-              className="w-full flex items-center gap-3 justify-center text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-900/30 rounded-lg transition-all duration-200 font-medium"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="text-sm font-medium">Logout</span>
-            </button>
-          </div>
+          <button
+            onClick={async () => {
+              await logout();
+              navigate("/login");
+            }}
+            className="w-full flex items-center gap-3 justify-center text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-900/30 rounded-lg transition-all duration-200 font-medium"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-sm font-medium">Logout</span>
+          </button>
         )}
       </div>
     </aside>

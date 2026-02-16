@@ -117,7 +117,7 @@ export default function DataTable<TData, TValue>({
             style={{ maxHeight: scrollHeight }}
           >
             <Table className="border-collapse min-w-full" style={{ minWidth: "800px" }}>
-              <TableHeader className="sticky top-0 z-[100] bg-white dark:bg-gray-900 shadow-lg border-b-2 border-gray-300 dark:border-gray-600">
+              <TableHeader className="sticky top-0 z-[10] bg-white dark:bg-gray-900 shadow-lg border-b-2 border-gray-300 dark:border-gray-600">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
@@ -126,8 +126,8 @@ export default function DataTable<TData, TValue>({
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
-                        className="bg-white dark:bg-gray-900 font-semibold text-gray-900 dark:text-gray-100 text-[0.75rem] sm:text-xs md:text-sm uppercase tracking-wider whitespace-nowrap px-2 sm:px-3 md:px-4 py-2 sm:py-3 sticky top-0 z-[100]"
-                        style={{ position: "sticky", top: 0, zIndex: 100 }}
+                        className="bg-white dark:bg-gray-900 font-semibold text-gray-900 dark:text-gray-100 text-[0.75rem] sm:text-xs md:text-sm uppercase tracking-wider whitespace-nowrap px-2 sm:px-3 md:px-4 py-2 sm:py-3 sticky top-0 z-[10]"
+                        style={{ position: "sticky", top: 0, zIndex: 10 }}
                       >
                         {header.isPlaceholder
                           ? null

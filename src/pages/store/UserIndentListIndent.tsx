@@ -308,7 +308,7 @@ export default function UserIndentListIndent() {
 
   return (
     <div className="w-full p-4 md:p-6 lg:p-8">
-      <Heading heading="Indent List" subtext="Your Indent lines" />
+      <Heading heading="Requested Indent" subtext="Your Indent lines" />
 
       <div className="mb-4 grid gap-3 md:grid-cols-3">
         <div className="flex flex-col gap-1">

@@ -53,8 +53,13 @@ export default function Login() {
         if (decoded?.role === "admin") {
           navigate("/store/dashboard", { replace: true });
         } else {
-          // Default to requisition list for regular users
-          navigate("/store/user-requisition", { replace: true });
+          // Default landing for regular users
+          const isMobile = window.innerWidth < 1024; // Match lg breakpoint
+          if (isMobile) {
+            navigate("/store/erp-indent", { replace: true });
+          } else {
+            navigate("/store/user-requisition", { replace: true });
+          }
         }
       } else {
         navigate("/", { replace: true });
@@ -122,9 +127,14 @@ export default function Login() {
               navigate("/store/dashboard", { replace: true });
             }, 200);
           } else {
-            // Default to requisition list for regular users
+            // Default landing for regular users
             setTimeout(() => {
-              navigate("/store/user-requisition", { replace: true });
+              const isMobile = window.innerWidth < 1024; // Match lg breakpoint
+              if (isMobile) {
+                navigate("/store/erp-indent", { replace: true });
+              } else {
+                navigate("/store/user-requisition", { replace: true });
+              }
             }, 200);
           }
         } else {

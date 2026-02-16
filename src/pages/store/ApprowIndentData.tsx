@@ -206,7 +206,8 @@ export default function ApprowIndentData() {
         const role = String(user?.role || "").toUpperCase();
         const userDept = (user?.user_access || user?.department || "").toUpperCase();
 
-        if (role !== "ADMIN" && userDept) {
+        const canSeeAll = role === "ADMIN" || role === "USER";
+        if (!canSeeAll && userDept) {
           return (r.department || "").toUpperCase() === userDept;
         }
 
@@ -230,7 +231,8 @@ export default function ApprowIndentData() {
         const role = String(user?.role || "").toUpperCase();
         const userDept = (user?.user_access || user?.department || "").toUpperCase();
 
-        if (role !== "ADMIN" && userDept) {
+        const canSeeAll = role === "ADMIN" || role === "USER";
+        if (!canSeeAll && userDept) {
           return (r.department || "").toUpperCase() === userDept;
         }
 

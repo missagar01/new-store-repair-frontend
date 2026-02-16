@@ -35,10 +35,31 @@ import StoreGRNCloseBill from "./pages/store/StoreGRNCloseBill";
 import GrnAndPo from "./pages/store/GrnAndPo";
 import StoreIssue from "./pages/store/StoreIssue";
 import ReturnablePage from "./pages/store/ReturnablePage";
+import ErpIndent from "./pages/store/ErpIndent";
 
 // Store page aliases for routing
 const PoPending = PendingPOs;
 const PoHistory = PendingPOs;
+
+// Default landing decision component
+const DefaultLanding = () => {
+  const { user } = useAuth();
+  const isMobile = window.innerWidth < 1024; // Match lg breakpoint
+  
+  // Admin always goes to dashboard
+  if (user?.role === "admin") {
+    return <Navigate to="/store/dashboard" replace />;
+  }
+  
+  // Regular users on mobile go to ERP Indent
+  if (isMobile) {
+    return <Navigate to="/store/erp-indent" replace />;
+  }
+  
+  // Desktop regular users (optional: dashboard or requisition)
+  // Requisition was the original default for desktop users in Login.tsx
+  return <Navigate to="/store/dashboard" replace />;
+};
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -65,8 +86,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        {/* Default landing → store dashboard */}
-        <Route path="/" element={<Navigate to="/store/dashboard" replace />} />
+        {/* Default landing → smart redirect */}
+        <Route path="/" element={<DefaultLanding />} />
         <Route path="/profile" element={<UserProfiles />} />
         {/* Store System Routes */}
         <Route path="/store/dashboard" element={<StoreDashboard />} />
@@ -116,6 +137,7 @@ function AppRoutes() {
         <Route path="/store/grn-po" element={<GrnAndPo />} />
         <Route path="/store/store-issue" element={<StoreIssue />} />
         <Route path="/store/returnable" element={<ReturnablePage />} />
+        <Route path="/store/erp-indent" element={<ErpIndent />} />
 
         <Route path="/store/loading" element={<Loading />} />
         <Route path="/indent/all" element={<IndentAll />} />
