@@ -22,6 +22,9 @@ type ErpIndentRow = {
   PO_NUMBER: string;
   GRN_NO: string;
   GRN_DATE: string;
+  ISSUE_NO: string;
+  ISSUE_DATE: string;
+  RECEIVER: string;
 };
 
 const formatDate = (dateString: string | null | undefined) => {
@@ -89,6 +92,8 @@ export default function ErpIndent() {
     "PURCHASER",
     "PO_NUMBER",
     "GRN_NO",
+    "ISSUE_NO",
+    "RECEIVER",
   ];
 
   const columns: ColumnDef<ErpIndentRow>[] = [
@@ -125,6 +130,21 @@ export default function ErpIndent() {
       accessorKey: "GRN_DATE",
       header: "GRN Date",
       cell: ({ row }) => row.original.GRN_DATE || "-"
+    },
+    {
+      accessorKey: "ISSUE_NO",
+      header: "Issue No.",
+      cell: ({ row }) => row.original.ISSUE_NO || "-"
+    },
+    {
+      accessorKey: "ISSUE_DATE",
+      header: "Issue Date",
+      cell: ({ row }) => row.original.ISSUE_DATE || "-"
+    },
+    {
+      accessorKey: "RECEIVER",
+      header: "Receiver",
+      cell: ({ row }) => row.original.RECEIVER || "-"
     },
   ];
 
