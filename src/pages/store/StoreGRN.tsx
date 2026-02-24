@@ -15,7 +15,6 @@ type StoreGRNRow = {
     VRDATE?: string;
     PARTYNAME?: string;
     PARTYBILLNO?: string;
-    PARTYBILLAMT?: number;
     sended_bill?: boolean;
 };
 
@@ -86,7 +85,6 @@ export default function StoreGRN() {
                     VRDATE: r.grn_date,
                     PARTYNAME: r.party_name,
                     PARTYBILLNO: r.party_bill_no,
-                    PARTYBILLAMT: r.party_bill_amount,
                     PLANNEDDATE: r.planned_date,
                     sended_bill: true,
                 }));
@@ -129,7 +127,6 @@ export default function StoreGRN() {
                 grn_date: row.VRDATE,
                 party_name: row.PARTYNAME,
                 party_bill_no: row.PARTYBILLNO,
-                party_bill_amount: row.PARTYBILLAMT,
             });
 
 
@@ -228,7 +225,6 @@ export default function StoreGRN() {
                                 <th className="px-3 py-2">GRN Date</th>
                                 <th className="px-3 py-2">Party Name</th>
                                 <th className="px-3 py-2">Bill No</th>
-                                <th className="px-3 py-2 text-right">Bill Amount</th>
                             </tr>
                         </thead>
 
@@ -256,11 +252,6 @@ export default function StoreGRN() {
                                     <td className="px-3 py-2">{formatDate(row.VRDATE)}</td>
                                     <td className="px-3 py-2">{row.PARTYNAME}</td>
                                     <td className="px-3 py-2">{row.PARTYBILLNO}</td>
-                                    <td className="px-3 py-2 text-right">
-                                        {row.PARTYBILLAMT?.toLocaleString("en-IN", {
-                                            minimumFractionDigits: 2,
-                                        })}
-                                    </td>
 
                                 </tr>
                             ))}

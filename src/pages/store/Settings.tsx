@@ -31,7 +31,6 @@ const STORE_ACCESS_OPTIONS = [
     "Store GRN",
     "Store GRN GM Approval",
     "Store GRN Close",
-    "GRN & PO",
     "Store Out Approval",
     "Completed Items",
     "Approve Indent HOD",

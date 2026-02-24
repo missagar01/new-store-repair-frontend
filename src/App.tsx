@@ -32,7 +32,6 @@ import StoreGRN from "./pages/store/StoreGRN";
 import StoreGRNAdmin from "./pages/store/StoreGRNAdminApproval";
 import StoreGRNGM from "./pages/store/StoreGRNGMApproval";
 import StoreGRNCloseBill from "./pages/store/StoreGRNCloseBill";
-import GrnAndPo from "./pages/store/GrnAndPo";
 import StoreIssue from "./pages/store/StoreIssue";
 import ReturnablePage from "./pages/store/ReturnablePage";
 import ErpIndent from "./pages/store/ErpIndent";
@@ -134,7 +133,6 @@ function AppRoutes() {
         <Route path="/store/store-grn-admin" element={<StoreGRNAdmin />} />
         <Route path="/store/store-grn-gm" element={<StoreGRNGM />} />
         <Route path="/store/store-grn-close" element={<StoreGRNCloseBill />} />
-        <Route path="/store/grn-po" element={<GrnAndPo />} />
         <Route path="/store/store-issue" element={<StoreIssue />} />
         <Route path="/store/returnable" element={<ReturnablePage />} />
         <Route path="/store/erp-indent" element={<ErpIndent />} />

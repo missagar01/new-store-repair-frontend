@@ -434,6 +434,8 @@ export default function ApproveIndent() {
                     <th className="bg-white border-b px-3 py-2 font-semibold">Department</th>
                     <th className="bg-white border-b px-3 py-2 font-semibold">Item Name</th>
                     <th className="bg-white border-b px-3 py-2 font-semibold">UOM</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Acknowledge Date</th>
+                    <th className="bg-white border-b px-3 py-2 font-semibold">Purchaser</th>
                     <th className="bg-white border-b px-3 py-2 font-semibold">Required Qty</th>
                     <th className="bg-white border-b px-3 py-2 font-semibold">Remark</th>
                     <th className="bg-white border-b px-3 py-2 font-semibold">Specification</th>
@@ -444,7 +446,7 @@ export default function ApproveIndent() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={14} className="py-6 text-center text-slate-500 text-sm">
+                      <td colSpan={16} className="py-6 text-center text-slate-500 text-sm">
                         <div className="flex items-center justify-center gap-2">
                           <Loader size={16} />
                           Loading...
@@ -453,7 +455,7 @@ export default function ApproveIndent() {
                     </tr>
                   ) : pendingPageRows.length === 0 ? (
                     <tr>
-                      <td colSpan={14} className="py-6 text-center text-slate-400 text-sm">
+                      <td colSpan={16} className="py-6 text-center text-slate-400 text-sm">
                         No Pending Indents Found
                       </td>
                     </tr>
@@ -478,6 +480,8 @@ export default function ApproveIndent() {
                         <td className="border-b px-2 py-1">{row.DEPARTMENT}</td>
                         <td className="border-b px-2 py-1">{row.ITEM_NAME}</td>
                         <td className="border-b px-2 py-1">{row.UM}</td>
+                        <td className="border-b px-2 py-1">{formatDate(row.ACKNOWLEDGEDATE)}</td>
+                        <td className="border-b px-2 py-1">{row.PURCHASER}</td>
                         <td className="border-b px-2 py-1">{row.REQUIRED_QTY}</td>
                         <td className="border-b px-2 py-1">{row.REMARK}</td>
                         <td className="border-b px-2 py-1">{row.SPECIFICATION}</td>

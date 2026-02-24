@@ -47,7 +47,6 @@ const storeAdminLimitedSubItems = [
   { name: "Store GRN", path: "/store/store-grn" },
   { name: "Store GRN GM Approval", path: "/store/store-grn-gm" },
   { name: "Store GRN Close", path: "/store/store-grn-close" },
-  { name: "GRN & PO", path: "/store/grn-po" },
   { name: "Store Out Approval", path: "/store/store-out-approval" },
   { name: "Completed Items", path: "/store/completed-items" },
   { name: "Settings", path: "/store/settings" },

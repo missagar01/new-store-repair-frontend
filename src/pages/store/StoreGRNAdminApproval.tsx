@@ -14,7 +14,6 @@ type StoreGRNRow = {
     grn_date?: string;
     party_name?: string;
     party_bill_no?: string;
-    party_bill_amount?: number;
 
     sended_bill?: boolean;
     approved_by_admin?: boolean;
@@ -180,7 +179,6 @@ export default function StoreGRNAdminApproval() {
                                 <th className="px-3 py-2">GRN Date</th>
                                 <th className="px-3 py-2">Party Name</th>
                                 <th className="px-3 py-2">Bill No</th>
-                                <th className="px-3 py-2 text-right">Bill Amount</th>
                                 <th className="px-3 py-2 text-center">Sended Bill</th>
                                 {activeTab === "history" && (
                                     <th className="px-3 py-2 text-center">
@@ -217,11 +215,6 @@ export default function StoreGRNAdminApproval() {
                                     <td className="px-3 py-2">{formatDate(row.grn_date)}</td>
                                     <td className="px-3 py-2">{row.party_name}</td>
                                     <td className="px-3 py-2">{row.party_bill_no}</td>
-                                    <td className="px-3 py-2 text-right">
-                                        {row.party_bill_amount?.toLocaleString("en-IN", {
-                                            minimumFractionDigits: 2,
-                                        })}
-                                    </td>
                                     <td className="px-3 py-2 text-center">
                                         {row.sended_bill ? "Yes" : "No"}
                                     </td>

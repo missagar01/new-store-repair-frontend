@@ -8,7 +8,6 @@ export interface StoreGRNApproval {
     grn_date?: string;          // date
     party_name?: string;
     party_bill_no?: string;
-    party_bill_amount?: number;
 
     sended_bill?: boolean;
     approved_by_admin?: boolean;

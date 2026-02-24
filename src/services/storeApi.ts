@@ -172,11 +172,6 @@ export const storeApi = {
       body: JSON.stringify(data),
     }),
 
-  getGrnAndPoSummary: (params: { fromDate?: string; toDate?: string }) => {
-    const queryString = new URLSearchParams(params).toString();
-    return apiRequest(`/grn-and-po/summary${queryString ? `?${queryString}` : ""}`);
-  },
-
   getStoreIssues: () => apiRequest("/store-issue"),
 
   // User APIs
