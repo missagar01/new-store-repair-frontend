@@ -79,9 +79,6 @@ const mapApiRowToIndent = (rec: Record<string, unknown>): IndentRow => {
 export default function CompletedItems() {
   const [rows, setRows] = useState<IndentRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedIndent, setSelectedIndent] = useState<IndentRow | null>(null);
-  const [indentNumber, setIndentNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
 
@@ -144,12 +141,12 @@ export default function CompletedItems() {
   }, []);
 
   const activeRows = useMemo(
-    () => rows.filter((r) => !r.actual1 || r.actual1 === ""),
+    () => rows.filter((r) => !r.indentNumber || r.indentNumber === ""),
     [rows]
   );
 
   const historyRows = useMemo(
-    () => rows.filter((r) => r.actual1 && r.actual1 !== ""),
+    () => rows.filter((r) => r.indentNumber && r.indentNumber !== ""),
     [rows]
   );
 
@@ -233,16 +230,17 @@ export default function CompletedItems() {
         header: "Action",
         cell: ({ row }) => (
           <button
-            onClick={() => openProcessModal(row.original)}
-            className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+            onClick={() => handleProcess(row.original)}
+            disabled={submitting}
+            className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
           >
-            Process
+            {submitting ? "..." : "Process"}
           </button>
         ),
       },
       ...commonColumns
     ],
-    [commonColumns]
+    [commonColumns, submitting]
   );
 
   const historyColumns: ColumnDef<IndentRow>[] = useMemo(
@@ -253,51 +251,33 @@ export default function CompletedItems() {
     [commonColumns]
   );
 
-  const openProcessModal = (row: IndentRow) => {
-    setSelectedIndent(row);
-    setIndentNumber(row.indentNumber || "");
-    setShowModal(true);
-  };
-
-  const closeProcessModal = () => {
-    setShowModal(false);
-    setSelectedIndent(null);
-    setIndentNumber("");
-  };
-
-  const handleSubmitIndentNumber = async () => {
-    if (!selectedIndent?.requestNumber) return;
-
-    if (!indentNumber.trim()) {
-      toast.error("Indent number is required");
-      return;
-    }
+  const handleProcess = async (row: IndentRow) => {
+    if (!row.requestNumber) return;
 
     try {
       setSubmitting(true);
       const now = new Date().toISOString();
+      const autoValue = "processed";
 
       await storeApi.updateIndentNumber(
-        selectedIndent.requestNumber,
-        indentNumber.trim(),
+        row.requestNumber,
+        autoValue,
         now
       );
 
-      toast.success("Indent number updated successfully");
+      toast.success("Processed successfully");
 
-      // Optional: update UI row locally
+      // Update local state to move it to History
       setRows((prev) =>
         prev.map((r) =>
-          r.requestNumber === selectedIndent.requestNumber
-            ? { ...r, updatedAt: new Date().toISOString() }
+          r.requestNumber === row.requestNumber
+            ? { ...r, indentNumber: autoValue, actual1: now, updatedAt: now }
             : r
         )
       );
-
-      closeProcessModal();
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || "Failed to update indent number");
+      toast.error(err?.message || "Failed to process item");
     } finally {
       setSubmitting(false);
     }
@@ -343,66 +323,7 @@ export default function CompletedItems() {
         </Tabs>
       </div>
 
-      {showModal && selectedIndent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6 relative">
-            {/* Close button */}
-            <button
-              onClick={closeProcessModal}
-              className="absolute top-3 right-3 text-gray-500 hover:text-black"
-            >
-              ✕
-            </button>
 
-            <h2 className="text-lg font-semibold mb-4">Process Indent</h2>
-
-            {/* Request Number (readonly) */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Request Number
-              </label>
-              <input
-                type="text"
-                value={selectedIndent.requestNumber || ""}
-                disabled
-                className="w-full px-3 py-2 border rounded bg-gray-100"
-              />
-            </div>
-
-            {/* Indent Number */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Indent Number
-              </label>
-              <input
-                type="text"
-                value={indentNumber}
-                onChange={(e) => setIndentNumber(e.target.value)}
-                placeholder="Enter indent number"
-                className="w-full px-3 py-2 border rounded"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={closeProcessModal}
-                className="px-4 py-2 border rounded"
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmitIndentNumber}
-                disabled={submitting}
-                className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-60"
-              >
-                {submitting ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
