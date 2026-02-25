@@ -97,7 +97,7 @@ export default function ApproveIndentGM() {
     const canSave = useMemo(
         () =>
             modalItems.length > 0 &&
-            modalItems.every((item) => {
+            modalItems.some((item) => {
                 const status = (item.gmStatus ?? "").toUpperCase();
                 return status === "APPROVED" || status === "REJECTED";
             }),
@@ -234,7 +234,7 @@ export default function ApproveIndentGM() {
     }, []);
 
     const handleProcess = useCallback(
-        async (row: IndentRow) => {
+        (row: IndentRow) => {
             const rn = row.requestNumber || "";
             if (!rn) {
                 toast.error("Request number unavailable for this row");
@@ -243,22 +243,10 @@ export default function ApproveIndentGM() {
 
             setIndentNumber(rn);
             setHeaderRequesterName(row.requesterName || "");
-            setModalItems([]);
-            setDetailsLoading(true);
+            setModalItems([row]);
             setOpenEdit(true);
-
-            try {
-                const details = await fetchRequestItems(rn);
-                setModalItems(details);
-            } catch (err) {
-                console.error("Failed to fetch request details", err);
-                toast.error("Failed to fetch indent details");
-                setOpenEdit(false);
-            } finally {
-                setDetailsLoading(false);
-            }
         },
-        [fetchRequestItems]
+        []
     );
 
     const commonColumns: ColumnDef<IndentRow>[] = [
@@ -396,12 +384,16 @@ export default function ApproveIndentGM() {
 
             // Update rows and filter out approved/rejected items
             setRows((prev) => {
-                const others = prev.filter((p) => p.requestNumber !== indentNumber);
-                const updatedItems = modalItems.map((item) => ({
-                    ...item,
-                    gmStatus: (item.gmStatus ?? "").toUpperCase() as "APPROVED" | "REJECTED" | "PENDING" | "",
-                }));
-                return [...others, ...updatedItems];
+                return prev.map((p) => {
+                    const updated = modalItems.find((m) => m.id === p.id);
+                    if (updated) {
+                        return {
+                            ...p,
+                            gmStatus: (updated.gmStatus ?? "").toUpperCase() as "APPROVED" | "REJECTED" | "PENDING" | "",
+                        };
+                    }
+                    return p;
+                });
             });
 
             toast.success("GM approval status updated");
@@ -456,7 +448,7 @@ export default function ApproveIndentGM() {
             <RowClickBinder rows={gmPendingRows} onPick={selectFromRow} />
 
             <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-                <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden bg-white">
+                <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
                     <DialogHeader>
                         <DialogTitle>GM Approval - Indent Items</DialogTitle>
                         <DialogDescription>
