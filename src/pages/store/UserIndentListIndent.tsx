@@ -225,9 +225,33 @@ export default function UserIndentListIndent() {
   }, [rows]);
 
   const columns: ColumnDef<IndentRow>[] = [
+    { accessorKey: "itemCode", header: "Item Code" },
+    { accessorKey: "productName", header: "Product" },
+    { accessorKey: "approvedQty", header: "Approved Qty" },
+    { accessorKey: "requestNumber", header: "Request No." },
+    { accessorKey: "indentSeries", header: "Series" },
+    { accessorKey: "requesterName", header: "Requester" },
+    { accessorKey: "department", header: "Department" },
+    { accessorKey: "division", header: "Division" },
+    { accessorKey: "uom", header: "UOM" },
+    { accessorKey: "requestQty", header: "Qty" },
+    { accessorKey: "costLocation", header: "Cost Location" },
+    { accessorKey: "specification", header: "Specification" },
+    { accessorKey: "make", header: "Make" },
+    { accessorKey: "purpose", header: "Purpose" },
+    {
+      accessorKey: "planned_1",
+      header: "Planned Date",
+      cell: ({ row }) => (row.original as any).planned_1 ? new Date((row.original as any).planned_1).toLocaleDateString("en-GB") : "-"
+    },
+    {
+      accessorKey: "actual_1",
+      header: "Actual Date",
+      cell: ({ row }) => (row.original as any).actual_1 ? new Date((row.original as any).actual_1).toLocaleDateString("en-GB") : "-"
+    },
     {
       accessorKey: "indentNumber",
-      header: "Indent No.",
+      header: "Req. Status",
       cell: ({ row }) => {
         const val = row.original.indentNumber;
         if (!val || !val.trim()) {
@@ -279,30 +303,6 @@ export default function UserIndentListIndent() {
 
         return <span className="font-medium text-blue-600">PENDING GM</span>;
       },
-    },
-    { accessorKey: "requestNumber", header: "Request No." },
-    { accessorKey: "indentSeries", header: "Series" },
-    { accessorKey: "requesterName", header: "Requester" },
-    { accessorKey: "department", header: "Department" },
-    { accessorKey: "division", header: "Division" },
-    { accessorKey: "itemCode", header: "Item Code" },
-    { accessorKey: "productName", header: "Product" },
-    { accessorKey: "uom", header: "UOM" },
-    { accessorKey: "requestQty", header: "Qty" },
-    { accessorKey: "approvedQty", header: "Approved Qty" },
-    { accessorKey: "costLocation", header: "Cost Location" },
-    { accessorKey: "specification", header: "Specification" },
-    { accessorKey: "make", header: "Make" },
-    { accessorKey: "purpose", header: "Purpose" },
-    {
-      accessorKey: "planned_1",
-      header: "Planned Date",
-      cell: ({ row }) => (row.original as any).planned_1 ? new Date((row.original as any).planned_1).toLocaleDateString("en-GB") : "-"
-    },
-    {
-      accessorKey: "actual_1",
-      header: "Actual Date",
-      cell: ({ row }) => (row.original as any).actual_1 ? new Date((row.original as any).actual_1).toLocaleDateString("en-GB") : "-"
     },
   ];
 

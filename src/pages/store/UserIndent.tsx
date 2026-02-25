@@ -75,6 +75,7 @@ export default function UserIndent() {
   const [previousDivision, setPreviousDivision] = useState("");
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [loadingStock, setLoadingStock] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<IndentForm>({
     defaultValues: {
@@ -475,6 +476,7 @@ export default function UserIndent() {
 
   const onSubmit = async (data: IndentForm) => {
     try {
+      setSubmitting(true);
       if (!data.items.length) {
         toast.error("Please add at least one item");
         return;
@@ -560,6 +562,8 @@ export default function UserIndent() {
       console.error("Error submitting indent:", err);
       const message = err?.response?.data?.message || "Failed to save indent";
       toast.error(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -972,8 +976,16 @@ export default function UserIndent() {
               <Button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-10"
+                disabled={submitting}
               >
-                Submit
+                {submitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    Submitting...
+                  </div>
+                ) : (
+                  "Submit"
+                )}
               </Button>
               <Button
                 type="button"

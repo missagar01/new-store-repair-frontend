@@ -49,15 +49,25 @@ const DefaultLanding = () => {
   if (user?.role === "admin") {
     return <Navigate to="/store/dashboard" replace />;
   }
+
+  // Check for explicit store dashboard access
+  const storeAccess = (user?.store_access || "")
+    .split(",")
+    .map(v => v.trim().toUpperCase());
+  const hasDashboardAccess = storeAccess.includes("DASHBOARD");
   
   // Regular users on mobile go to ERP Indent
   if (isMobile) {
     return <Navigate to="/store/erp-indent" replace />;
   }
   
-  // Desktop regular users (optional: dashboard or requisition)
-  // Requisition was the original default for desktop users in Login.tsx
-  return <Navigate to="/store/dashboard" replace />;
+  // Desktop users go to dashboard only if they have access
+  if (hasDashboardAccess) {
+    return <Navigate to="/store/dashboard" replace />;
+  }
+
+  // Default for others
+  return <Navigate to="/store/erp-indent" replace />;
 };
 
 function AppRoutes() {

@@ -2,6 +2,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { storeApi } from "../../services";
 import { useStoreDashboard } from "../../context/StoreDashboardContext";
+import { useAuth } from "../../context/AuthContext";
+import { Navigate } from "react-router";
 import {
   ClipboardList, LayoutDashboard, PackageCheck, Truck,
   Warehouse, FileText, TrendingUp, BarChart3, Activity,
@@ -69,8 +71,24 @@ export default function StoreDashboard() {
     isLoading: loading,
     error: apiError,
   } = useStoreDashboard();
+  const { user } = useAuth();
+
+  // Permission Check
+  const hasAccess = useMemo(() => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    const storeAccess = (user.store_access || "")
+      .split(",")
+      .map(v => v.trim().toUpperCase());
+    return storeAccess.includes("DASHBOARD");
+  }, [user]);
 
   const [error, setError] = useState<string | null>(null);
+
+  // Redirect if no access
+  if (!loading && !hasAccess) {
+    return <Navigate to="/store/erp-indent" replace />;
+  }
 
   // Sync context error to local error if needed
   useEffect(() => {
