@@ -450,7 +450,7 @@ export default function ApprowIndentData() {
       <RowClickBinder rows={pendingRows} onPick={selectFromRow} />
 
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden bg-white">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle>Edit / Approve Items</DialogTitle>
             <DialogDescription>
