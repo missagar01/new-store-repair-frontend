@@ -98,7 +98,7 @@ export default function ApprowIndentData() {
   const canSave = useMemo(
     () =>
       modalItems.length > 0 &&
-      modalItems.every((item) => {
+      modalItems.some((item) => {
         const status = (item.status ?? "").toUpperCase();
         return status === "APPROVED" || status === "REJECTED";
       }),
@@ -253,7 +253,7 @@ export default function ApprowIndentData() {
   }, []);
 
   const handleProcess = useCallback(
-    async (row: IndentRow) => {
+    (row: IndentRow) => {
       const rn = row.requestNumber || "";
       if (!rn) {
         toast.error("Request number unavailable for this row");
@@ -262,22 +262,10 @@ export default function ApprowIndentData() {
 
       setIndentNumber(rn);
       setHeaderRequesterName(row.requesterName || "");
-      setModalItems([]);
-      setDetailsLoading(true);
+      setModalItems([row]);
       setOpenEdit(true);
-
-      try {
-        const details = await fetchRequestItems(rn);
-        setModalItems(details);
-      } catch (err) {
-        console.error("Failed to fetch request details", err);
-        toast.error("Failed to fetch indent details");
-        setOpenEdit(false);
-      } finally {
-        setDetailsLoading(false);
-      }
     },
-    [fetchRequestItems]
+    []
   );
 
   const commonColumns: ColumnDef<IndentRow>[] = [
@@ -389,13 +377,16 @@ export default function ApprowIndentData() {
 
       // Update rows and filter out approved/rejected items
       setRows((prev) => {
-        const others = prev.filter((p) => p.requestNumber !== indentNumber);
-        // Add updated items with their new status
-        const updatedItems = modalItems.map((item) => ({
-          ...item,
-          status: (item.status ?? "").toUpperCase() as "APPROVED" | "REJECTED" | "PENDING" | "",
-        }));
-        return [...others, ...updatedItems];
+        return prev.map((p) => {
+          const updated = modalItems.find((m) => m.id === p.id);
+          if (updated) {
+            return {
+              ...p,
+              status: (updated.status ?? "").toUpperCase() as "APPROVED" | "REJECTED" | "PENDING" | "",
+            };
+          }
+          return p;
+        });
       });
 
       toast.success("Indent status updated");
