@@ -194,8 +194,11 @@ export default function StoreDashboard() {
       show: false,
     },
     tooltip: {
-      y: {
-        formatter: (val) => `${val} Indents`
+      custom: function ({ series, seriesIndex, w }: any) {
+        return `<div style="background: #111827; color: #ffffff; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);">
+          <div style="font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">${w.globals.labels[seriesIndex]}</div>
+          <div style="font-size: 14px; font-weight: 900; color: #ffffff;">${series[seriesIndex]} Indents</div>
+        </div>`;
       }
     }
   };
