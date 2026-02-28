@@ -1,5 +1,5 @@
 // Store Dashboard - Modern UI Version with Modal Integration and Status Tracking
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { storeApi } from "../../services";
 import { useStoreDashboard } from "../../context/StoreDashboardContext";
 import { useAuth } from "../../context/AuthContext";
@@ -8,11 +8,13 @@ import {
   ClipboardList, LayoutDashboard, PackageCheck, Truck,
   Warehouse, FileText, TrendingUp, BarChart3, Activity,
   ArrowUpRight, ArrowDownRight, Package, Users, Calendar,
-  ArrowRight, RefreshCcw, Search, X, CheckCircle2, Clock, Box
+  ArrowRight, RefreshCcw, Search, X, CheckCircle2, Clock, Box, ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "../../components/ui/dialog";
 import Loading from "./Loading";
+import Chart from "react-apexcharts";
+import { ApexOptions } from "apexcharts";
 
 type DashboardApiResponse = {
   success: boolean;
@@ -68,6 +70,8 @@ export default function StoreDashboard() {
     repairReceived,
     returnableDetails,
     dashboardSummary,
+    allVendors,
+    allProducts,
     isLoading: loading,
     error: apiError,
   } = useStoreDashboard();
@@ -105,6 +109,98 @@ export default function StoreDashboard() {
   const [modalPage, setModalPage] = useState(1);
   const MODAL_PAGE_SIZE = 50;
 
+  // Process Purchaser Performance Data for Chart (Current Month History Only)
+  const purchaserChartData = useMemo(() => {
+    if (!historyIndents || historyIndents.length === 0) return { series: [], labels: [] };
+
+    // Get Filtered Data (Current Month Only to match dashboard stats)
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    const filteredIndents = historyIndents.filter(item => {
+      // For History, we prioritize using ACKNOWLEDGEDATE or INDENT_DATE
+      const dateVal = item.ACKNOWLEDGEDATE || item.acknowledgedate || item.INDENT_DATE || item.indent_date;
+      return dateVal && new Date(dateVal) >= monthStart;
+    });
+
+    const totals: Record<string, number> = {};
+    let unassigned = 0;
+
+    filteredIndents.forEach((item: any) => {
+      const purchaser = item.PURCHASER || item.purchaser;
+
+      if (!purchaser || purchaser.trim() === "" || purchaser === "null") {
+        unassigned++;
+      } else {
+        const name = purchaser.trim();
+        totals[name] = (totals[name] || 0) + 1;
+      }
+    });
+
+    const labels = ["Unassigned"];
+    const series = [unassigned];
+
+    Object.entries(totals).forEach(([name, count]) => {
+      labels.push(name);
+      series.push(count);
+    });
+
+    return { series, labels, totalCount: filteredIndents.length };
+  }, [historyIndents]);
+
+  const donorChartOptions: ApexOptions = {
+    labels: purchaserChartData.labels,
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#1e293b'],
+    chart: {
+      type: 'donut',
+      fontFamily: "Outfit, sans-serif",
+      toolbar: { show: false }
+    },
+    stroke: { width: 4, colors: ['transparent'] },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '60%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total Completed',
+              fontSize: '10px',
+              fontWeight: 600,
+              color: '#64748b',
+              formatter: () => (purchaserChartData.totalCount || 0).toString()
+            },
+            value: {
+              fontSize: '22px',
+              fontWeight: 800,
+              color: '#1e293b',
+              offsetY: 4
+            }
+          }
+        }
+      }
+    },
+    dataLabels: {
+      enabled: true,
+      style: { fontSize: '10px', fontWeight: 'bold' },
+      dropShadow: { enabled: false },
+      formatter: function (val: number) {
+        return val.toFixed(0) + "%"
+      }
+    },
+    legend: {
+      show: false,
+    },
+    tooltip: {
+      y: {
+        formatter: (val) => `${val} Indents`
+      }
+    }
+  };
+
+
   // Helper for current month filtering
   // Helpers for date formatting
   const formatDate = (date: any) => {
@@ -140,15 +236,34 @@ export default function StoreDashboard() {
     const curMonthRepairPending = filterMonth(repairPending);
     const curMonthRepairHistory = filterMonth(repairHistory);
 
+    const curMonthOverdue = curMonthPendingIndents.filter(item => {
+      const ts = item.PLANNEDTIMESTAMP || item.plannedtimestamp;
+      return ts && new Date(ts) < new Date();
+    }).length;
+
+    const completed = curMonthHistoryIndents.length;
+    const pending = curMonthPendingIndents.length;
+    const total = completed + pending;
+
+    const completedPercent = total > 0 ? (completed / total) * 100 : 0;
+    const pendingPercent = total > 0 ? (pending / total) * 100 : 0;
+
     const curMonthReturnable = (returnableDetails || []).filter((item: any) => new Date(item.VRDATE || item.vrdate) >= monthStart);
 
     return {
       dashboardData: {
         ...(dashboardSummary || {}),
-        totalIndents: curMonthHistoryIndents.length,
-        pendingIndents: curMonthPendingIndents.length,
+        totalIndents: total,
+        completedIndents: completed,
+        pendingIndents: pending,
+        overdueIndents: curMonthOverdue,
         totalPurchaseOrders: curMonthPoHistory.length,
         pendingPurchaseOrders: curMonthPoPending.length,
+        overallProgress: completedPercent,
+        completedPercent: completedPercent,
+        pendingPercent: pendingPercent,
+        upcomingPercent: 0, // Simplified for local current month view
+        overduePercent: total > 0 ? (curMonthOverdue / total) * 100 : 0,
       },
       repairGatePassCounts: {
         pending: curMonthRepairPending.length,
@@ -370,10 +485,10 @@ export default function StoreDashboard() {
   const cards = [
     {
       title: 'Total Indents',
-      icon: <ClipboardList size={22} />,
+      icon: <ClipboardList size={20} />,
       value: dashboardData?.totalIndents ?? '—',
-      sublabel: 'Indented Quantity',
-      subvalue: dashboardData?.totalIndentedQuantity?.toLocaleString() ?? '—',
+      // sublabel: 'Indented Quantity',
+      // subvalue: dashboardData?.totalIndentedQuantity?.toLocaleString() ?? '—',
       bgGradient: 'from-red-500 to-red-600',
       shadowColor: 'shadow-red-200 dark:shadow-red-900/20',
       iconBg: 'bg-white/20',
@@ -381,10 +496,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Pending Indents',
-      icon: <PackageCheck size={22} />,
+      icon: <PackageCheck size={20} />,
       value: dashboardData?.pendingIndents ?? '—',
-      sublabel: 'Indents Waiting',
-      subvalue: dashboardData?.pendingIndents?.toLocaleString() ?? '—',
+      // sublabel: 'Indents Waiting',
+      // subvalue: dashboardData?.pendingIndents?.toLocaleString() ?? '—',
       bgGradient: 'from-red-400 to-red-500',
       shadowColor: 'shadow-red-200 dark:shadow-red-900/20',
       iconBg: 'bg-white/20',
@@ -392,10 +507,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Total Purchases',
-      icon: <Truck size={22} />,
+      icon: <Truck size={20} />,
       value: dashboardData?.totalPurchaseOrders ?? '—',
-      sublabel: 'Purchased Quantity',
-      subvalue: dashboardData?.totalPurchasedQuantity?.toLocaleString() ?? '—',
+      // sublabel: 'Purchased Quantity',
+      // subvalue: dashboardData?.totalPurchasedQuantity?.toLocaleString() ?? '—',
       bgGradient: 'from-emerald-600 to-teal-700',
       shadowColor: 'shadow-emerald-200 dark:shadow-emerald-900/20',
       iconBg: 'bg-white/20',
@@ -403,10 +518,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Pending PO',
-      icon: <FileText size={22} />,
+      icon: <FileText size={20} />,
       value: dashboardData?.pendingPurchaseOrders ?? '—',
-      sublabel: 'POs Waiting',
-      subvalue: dashboardData?.pendingPurchaseOrders?.toLocaleString() ?? '—',
+      // sublabel: 'POs Waiting',
+      // subvalue: dashboardData?.pendingPurchaseOrders?.toLocaleString() ?? '—',
       bgGradient: 'from-emerald-500 to-teal-600',
       shadowColor: 'shadow-emerald-200 dark:shadow-emerald-900/20',
       iconBg: 'bg-white/20',
@@ -414,10 +529,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Repair Pending',
-      icon: <Activity size={22} />,
+      icon: <Activity size={20} />,
       value: repairGatePassCounts.pending ?? '—',
-      sublabel: 'Gate Pass Pending',
-      subvalue: repairGatePassCounts.pending?.toLocaleString() ?? '—',
+      // sublabel: 'Gate Pass Pending',
+      // subvalue: repairGatePassCounts.pending?.toLocaleString() ?? '—',
       bgGradient: 'from-violet-500 to-purple-600',
       shadowColor: 'shadow-purple-200 dark:shadow-purple-900/20',
       iconBg: 'bg-white/20',
@@ -425,10 +540,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Repair History',
-      icon: <FileText size={22} />,
+      icon: <FileText size={20} />,
       value: repairGatePassCounts.history ?? '—',
-      sublabel: 'Gate Pass Received',
-      subvalue: repairGatePassCounts.history?.toLocaleString() ?? '—',
+      // sublabel: 'Gate Pass Received',
+      // subvalue: repairGatePassCounts.history?.toLocaleString() ?? '—',
       bgGradient: 'from-violet-400 to-purple-500',
       shadowColor: 'shadow-purple-200 dark:shadow-purple-900/20',
       iconBg: 'bg-white/20',
@@ -436,10 +551,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Total Returnable',
-      icon: <RefreshCcw size={22} />,
+      icon: <RefreshCcw size={20} />,
       value: returnableStats.RETURNABLE_COUNT ?? '—',
-      sublabel: 'Total GP R3',
-      subvalue: returnableStats.RETURNABLE_COUNT?.toLocaleString() ?? '—',
+      // sublabel: 'Total GP R3',
+      // subvalue: returnableStats.RETURNABLE_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-indigo-600 to-blue-700',
       shadowColor: 'shadow-indigo-200 dark:shadow-indigo-900/20',
       iconBg: 'bg-white/20',
@@ -447,10 +562,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Non Returnable',
-      icon: <Box size={22} />,
+      icon: <Box size={20} />,
       value: returnableStats.NON_RETURNABLE_COUNT ?? '—',
-      sublabel: 'Gate Pass N3',
-      subvalue: returnableStats.NON_RETURNABLE_COUNT?.toLocaleString() ?? '—',
+      // sublabel: 'Gate Pass N3',
+      // subvalue: returnableStats.NON_RETURNABLE_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-indigo-500 to-blue-600',
       shadowColor: 'shadow-indigo-200 dark:shadow-indigo-900/20',
       iconBg: 'bg-white/20',
@@ -458,10 +573,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Returnable Pending',
-      icon: <Clock size={22} />,
+      icon: <Clock size={20} />,
       value: returnableStats.RETURNABLE_PENDING_COUNT ?? '—',
-      sublabel: 'GP Pending R3',
-      subvalue: returnableStats.RETURNABLE_PENDING_COUNT?.toLocaleString() ?? '—',
+      // sublabel: 'GP Pending R3',
+      // subvalue: returnableStats.RETURNABLE_PENDING_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-amber-500 to-orange-600',
       shadowColor: 'shadow-orange-200 dark:shadow-orange-900/20',
       iconBg: 'bg-white/20',
@@ -469,10 +584,10 @@ export default function StoreDashboard() {
     },
     {
       title: 'Returnable Completed',
-      icon: <CheckCircle2 size={22} />,
+      icon: <CheckCircle2 size={20} />,
       value: returnableStats.RETURNABLE_COMPLETED_COUNT ?? '—',
-      sublabel: 'GP Completed R3',
-      subvalue: returnableStats.RETURNABLE_COMPLETED_COUNT?.toLocaleString() ?? '—',
+      // sublabel: 'GP Completed R3',
+      // subvalue: returnableStats.RETURNABLE_COMPLETED_COUNT?.toLocaleString() ?? '—',
       bgGradient: 'from-amber-400 to-orange-500',
       shadowColor: 'shadow-orange-200 dark:shadow-orange-900/20',
       iconBg: 'bg-white/20',
@@ -577,13 +692,13 @@ export default function StoreDashboard() {
               </div>
 
               <div>
-                <p className="text-white/80 font-medium text-[10px] sm:text-xs tracking-wide uppercase truncate">{card.title}</p>
+                <p className="text-white/80 font-medium text-[14px] sm:text-xs tracking-wide uppercase truncate">{card.title}</p>
                 <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mt-1 mb-3 truncate">{card.value}</h3>
 
-                <div className="flex items-center justify-between border-t border-white/20 pt-3 mt-1">
+                {/* <div className="flex items-center justify-between border-t border-white/20 pt-3 mt-1">
                   <p className="text-white/70 text-[9px] font-medium truncate uppercase">{card.sublabel}</p>
                   <p className="text-white font-bold text-xs sm:text-sm truncate">{card.subvalue}</p>
-                </div>
+                </div> */}
               </div>
             </div>
           </button>
@@ -605,16 +720,16 @@ export default function StoreDashboard() {
             <div className="flex flex-col md:flex-row items-center justify-center gap-12">
               <div className="relative w-48 h-48 flex-shrink-0">
                 <svg className="transform -rotate-90 w-full h-full drop-shadow-lg">
-                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="12" fill="none" className="text-slate-100 dark:text-slate-800" />
-                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="12" fill="none"
+                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="28" fill="none" className="text-slate-100 dark:text-slate-800" />
+                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="28" fill="none"
                     strokeDasharray={`${(dashboardData?.upcomingPercent || 0) * 5.02} 502`}
                     strokeDashoffset={`-${((dashboardData?.completedPercent || 0) + (dashboardData?.pendingPercent || 0)) * 5.02}`}
                     className="text-slate-300 dark:text-slate-600" />
-                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="12" fill="none"
+                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="28" fill="none"
                     strokeDasharray={`${(dashboardData?.pendingPercent || 0) * 5.02} 502`}
                     strokeDashoffset={`-${(dashboardData?.completedPercent || 0) * 5.02}`}
                     className="text-amber-400" />
-                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="12" fill="none"
+                  <circle cx="50%" cy="50%" r="80" stroke="currentColor" strokeWidth="28" fill="none"
                     strokeDasharray={`${(dashboardData?.completedPercent || 0) * 5.02} 502`}
                     className="text-emerald-500" />
                 </svg>
@@ -653,19 +768,43 @@ export default function StoreDashboard() {
               <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">Performance Indicators</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="p-8 space-y-10">
-            <KpiItem
-              label="Purchase Performance"
-              value={(dashboardData && dashboardData.totalIndents > 0) ? Math.round((dashboardData.totalPurchaseOrders / dashboardData.totalIndents) * 100) : 0}
-              color="from-indigo-500 to-blue-500"
-              icon={<Truck size={16} />}
-            />
-            {/* <KpiItem label="Inventory Turnover" value={dashboardData ? Math.round((dashboardData.totalIssuedQuantity / dashboardData.totalPurchasedQuantity) * 100) : 0} color="from-emerald-500 to-teal-500" icon={<Package size={16} />} /> */}
+          <CardContent className="p-8">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+              <div className="relative w-48 h-48 flex-shrink-0">
+                {purchaserChartData.series.length > 0 ? (
+                  <Chart
+                    options={donorChartOptions}
+                    series={purchaserChartData.series}
+                    type="donut"
+                    height={220}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30">
+                    <BarChart3 size={48} className="mb-2" />
+                    <p className="text-xs font-bold">No data</p>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-1 gap-2 w-full max-h-48 overflow-y-auto custom-scrollbar pr-2">
+                {purchaserChartData.labels.map((label: string, index: number) => (
+                  <div key={label} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: donorChartOptions.colors?.[index % (donorChartOptions.colors?.length || 1)] as string }}
+                      />
+                      <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-tight">{label}</span>
+                    </div>
+                    <span className="text-sm font-black text-slate-900 dark:text-white">{purchaserChartData.series[index]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <TopListCard title="Top 10 Products" data={dashboardData?.topPurchasedItems} type="product" />
-        <TopListCard title="Top 10 Vendors" data={dashboardData?.topVendors} type="vendor" />
+        <TopListCard title="All Products" data={allProducts} type="product" />
+        <TopListCard title="All Vendors" data={allVendors} type="vendor" />
       </div>
 
       {/* Modal Dialog */}
@@ -784,36 +923,100 @@ function KpiItem({ label, value, color, icon }: any) {
 }
 
 function TopListCard({ title, data, type }: any) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibleLimit, setVisibleLimit] = useState(50);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const filteredData = useMemo(() => {
+    if (!data) return [];
+    if (!searchTerm) return data;
+    const term = searchTerm.toLowerCase();
+    return data.filter((item: any) =>
+      (item.itemName || item.vendorName || "").toLowerCase().includes(term)
+    );
+  }, [data, searchTerm]);
+
+  // Reset limit when search changes
+  useEffect(() => {
+    setVisibleLimit(50);
+  }, [searchTerm]);
+
+  const displayedData = useMemo(() => {
+    return filteredData.slice(0, visibleLimit);
+  }, [filteredData, visibleLimit]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    // Load more when 20px from bottom
+    if (scrollHeight - scrollTop <= clientHeight + 20) {
+      if (visibleLimit < filteredData.length) {
+        setVisibleLimit(prev => prev + 50);
+      }
+    }
+  };
+
   return (
-    <Card className="rounded-3xl border-0 bg-white dark:bg-slate-900 shadow-xl overflow-hidden flex flex-col h-[480px]">
-      <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b p-5">
-        <CardTitle className="text-lg font-bold flex items-center gap-2">
+    <Card className="rounded-xl border-0 bg-white dark:bg-slate-900 shadow-md overflow-hidden flex flex-col h-[500px]">
+      <CardHeader className="bg-slate-50/80 dark:bg-slate-800/80 border-b">
+        <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${type === 'product' ? 'bg-orange-500' : 'bg-emerald-500'}`}></span>
-          {title}
-        </CardTitle>
+          <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            {title}
+            <span className="text-[11px] text-slate-700 font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+              {data?.length || 0}
+            </span>
+          </CardTitle>
+        </div>
+
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder={`Search ${title}...`}
+            className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="p-0 overflow-y-auto flex-1">
-        {data && data.length > 0 ? (
-          data.slice(0, 10).map((item: any, idx: number) => (
-            <div key={idx} className="flex items-center p-4 border-b last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-              <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-sm font-bold flex items-center justify-center mr-4 text-slate-500 shrink-0">{idx + 1}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold truncate uppercase text-slate-800 dark:text-slate-200">{item.itemName || item.vendorName}</p>
-                <div className="flex items-center gap-3 mt-1">
-                  <p className="text-[10px] text-slate-400 font-medium">{item.totalOrderQty || item.totalItems} {type === 'product' ? 'units' : 'items'}</p>
-                  <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                  <p className="text-[10px] text-slate-400 font-medium">{item.orderCount || item.uniquePoCount} {type === 'product' ? 'Orders' : 'POs'}</p>
+      <CardContent
+        className="p-0 overflow-y-auto flex-1"
+        onScroll={handleScroll}
+        ref={scrollContainerRef}
+      >
+        {displayedData && displayedData.length > 0 ? (
+          <>
+            {displayedData.map((item: any, idx: number) => (
+              <div key={idx} className="flex items-center px-4 py-3 border-b border-slate-50 dark:border-slate-800/30 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                <div className="w-6 text-[11px] font-bold flex items-center justify-center mr-3 text-slate-400 shrink-0">{idx + 1}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold uppercase text-slate-700 dark:text-slate-200 leading-normal break-words">{item.itemName || item.vendorName}</p>
                 </div>
               </div>
-              <div className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter ${type === 'product' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>
-                TOP {idx + 1}
+            ))}
+            {visibleLimit < filteredData.length && (
+              <div className="p-2 text-center text-[9px] text-slate-400 font-medium italic animate-pulse">
+                Scrolling to load more...
               </div>
-            </div>
-          ))
+            )}
+            {searchTerm && filteredData.length === 0 && (
+              <div className="p-8 text-center text-[10px] text-slate-400 font-medium">
+                No matches found in {data?.length || 0} records
+              </div>
+            )}
+          </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-slate-300 p-12 text-center">
-            <Package size={64} className="mb-4 opacity-10" />
-            <p className="text-sm font-medium">No performance data available yet</p>
+          <div className="flex flex-col items-center justify-center h-full text-slate-200 dark:text-slate-800 p-6 text-center">
+            <Package size={32} className="mb-1 opacity-10" />
+            <p className="text-[9px] font-medium">{searchTerm ? "No match found" : "No data available"}</p>
           </div>
         )}
       </CardContent>

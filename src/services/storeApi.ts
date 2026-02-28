@@ -66,6 +66,8 @@ export const storeApi = {
       body: JSON.stringify(data),
     }),
   getStoreIndentDashboard: () => apiRequest("/store-indent/dashboard"),
+  getAllVendors: () => apiRequest("/store-indent/vendors"),
+  getAllProducts: () => apiRequest("/store-indent/products"),
   downloadPendingIndents: () =>
     fetch(`${API_BASE_URL}/store-indent/pending/download`, {
       headers: buildAuthHeaders(),

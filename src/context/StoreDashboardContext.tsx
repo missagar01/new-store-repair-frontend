@@ -11,6 +11,8 @@ interface StoreDashboardData {
   repairReceived: any[];
   returnableDetails: any[];
   dashboardSummary: any | null;
+  allVendors: any[];
+  allProducts: any[];
   lastUpdated: Date | null;
 }
 
@@ -41,6 +43,8 @@ export const StoreDashboardProvider: React.FC<{ children: React.ReactNode }> = (
     repairReceived: [],
     returnableDetails: [],
     dashboardSummary: null,
+    allVendors: [],
+    allProducts: [],
     lastUpdated: null,
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +61,9 @@ export const StoreDashboardProvider: React.FC<{ children: React.ReactNode }> = (
         repairHistory,
         repairReceived,
         returnableDetails,
-        dashboardSummary
+        dashboardSummary,
+        allVendors,
+        allProducts
       ] = await Promise.all([
         storeApi.getPendingIndents(),
         storeApi.getHistoryIndents(),
@@ -67,7 +73,9 @@ export const StoreDashboardProvider: React.FC<{ children: React.ReactNode }> = (
         storeApi.getRepairGatePassHistory(),
         storeApi.getRepairGatePassReceived(),
         storeApi.getReturnableDetails(),
-        storeApi.getStoreIndentDashboard()
+        storeApi.getStoreIndentDashboard(),
+        storeApi.getAllVendors(),
+        storeApi.getAllProducts()
       ]);
 
       setData({
@@ -80,6 +88,8 @@ export const StoreDashboardProvider: React.FC<{ children: React.ReactNode }> = (
         repairReceived: (repairReceived as any).data || [],
         returnableDetails: (returnableDetails as any).data || [],
         dashboardSummary: (dashboardSummary as any).data || null,
+        allVendors: (allVendors as any).data || [],
+        allProducts: (allProducts as any).data || [],
         lastUpdated: new Date(),
       });
       setError(null);
