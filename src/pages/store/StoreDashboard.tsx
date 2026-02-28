@@ -664,7 +664,7 @@ export default function StoreDashboard() {
               Store Dashboard
             </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              Live overview of inventory &amp; GP tracking
+              Live overview of Store &amp; Purchase
             </p>
           </div>
         </div>
